@@ -18,10 +18,14 @@ gulp.task('browserify', function () {
         // Start piping stream to tasks!
         .pipe(buffer())
         .pipe(sourcemaps.init({loadMaps:true}))
-            // .pipe(uglify())
+            .pipe(uglify())
             .on('error',gutil.log)
         .pipe(sourcemaps.write('./'))
         .pipe(gulp.dest('./'));
+});
+
+gulp.task('browserify:watchAll', function(){
+    gulp.watch(['./app/**/*'], ['browserify']);
 });
 
 gulp.task('browserify:watch', function () {
