@@ -7,19 +7,26 @@ var browserify = require('browserify'),
     rename = require('gulp-rename'),
     sourcemaps = require('gulp-sourcemaps'),
     uglify = require('gulp-uglify'),
-    gutil = require('gulp-util'),
-    buffer = require('vinyl-buffer')
+    buffer = require('vinyl-buffer'),
+    notify = require('gulp-notify');
 
 gulp.task('browserify', function () {
     return browserify('./app/app.js')
         .bundle()
+            .on('error', function(err){
+                console.log(err.message);
+                return notify("Browserify " + err).write(err);
+            })
         //Pass desired output filename to vinyl-source-stream
         .pipe(source('bundle.min.js'))
         // Start piping stream to tasks!
         .pipe(buffer())
         .pipe(sourcemaps.init({loadMaps:true}))
             .pipe(uglify())
-            .on('error',gutil.log)
+            .on('error', function(err){
+                console.log(err.message);
+                return notify("Uglify " + err).write(err);
+            })
         .pipe(sourcemaps.write('./'))
         .pipe(gulp.dest('./'));
 });
