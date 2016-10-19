@@ -1,6 +1,2 @@
-//put require statements here
-require("./spRest.service");
-
-angular.module("app.services",[
-	"spRest.service"
-]);
+module.exports = angular.module("app.services", [])
+	.provider("spService", require("./spRest.service"))

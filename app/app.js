@@ -3,9 +3,10 @@
 // var $ = require("jquery");
 var angular = require("angular");
 
-//separating angular components
-require("./services/app.services");
-require("./controllers/app.controllers");
-
-
-angular.module("app", ["app.controllers", "app.services"]);
+angular.module('app', [
+	require("./controllers/app.controllers").name,
+	require("./services/app.services").name
+])
+.constant("CONST", require("./const"))
+.config(require("./config"))
+.run(require("./run"));

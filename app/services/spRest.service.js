@@ -1,11 +1,8 @@
-angular.module("spRest.service", [])
-    .provider("spService", function () {
-
-        var digestValue = angular.element(document.querySelector("#__REQUESTDIGEST")).val();
-
-
-        return {
-            $get: ["$http", "$q", function ($http, $q) {
+// @ngInject
+module.exports = function(){
+	var digestValue = angular.element(document.querySelector("#__REQUESTDIGEST")).val();
+	return {
+            $get: /*@ngInject*/ function ($http, $q) {
                 return {
                     getDigestValue: function (url, complete) {
 
@@ -51,8 +48,12 @@ angular.module("spRest.service", [])
                         this.getFileBuffer(file).then(function (buffer) {
 
                             //cleans the string to correct name that is acceptable on sharepoint.
-                            var cleanStrFileName = fileName.replace(/^\.+|([|\/&;$%:#~?^{}*'@"<>()+,])|\.+$/g, "");
-                            cleanStrFileName = cleanStrFileName.substr(-128);
+                            try {
+	                            var cleanStrFileName = fileName.replace(/^\.+|([|\/&;$%:#~?^{}*'@"<>()+,])|\.+$/g, "");
+	                            cleanStrFileName = cleanStrFileName.substr(-128);
+                            } catch(e){
+                            	throw Error("Filename was not supply");
+                            }
 
                             getDigestValue(url, function (digestValue) {
                                 //you can only add or delete the list item but it will be different in documents
@@ -267,7 +268,6 @@ angular.module("spRest.service", [])
                     }
                 };
 
-            }]
+            }
         }
-
-    })
+};

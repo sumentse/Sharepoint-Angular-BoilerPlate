@@ -1,3 +1,1 @@
-//put require statements here
-
-angular.module("app.filters", []);
+module.exports = angular.module("app.filters", [])

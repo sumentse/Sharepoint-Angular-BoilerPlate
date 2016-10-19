@@ -1,3 +1,1 @@
-//put require statements here
-
-angular.module("app.directives", []);
+module.exports = angular.module("app.directives", [])

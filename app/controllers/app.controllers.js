@@ -1,4 +1,4 @@
-//put require statements here
-
-angular.module("app.controllers",[]);
+module.exports = angular.module("app.controllers", [])
+	.controller("example.controller", require("./example.controller"))
+	
 
