@@ -1,4 +1,15 @@
 // @ngInject
 module.exports = function(){
-	console.log("running config");
+    
+	// $urlRouterProvider.otherwise("/");
+
+
+    // $stateProvider
+    //     .state("", {
+    //         url: "/",
+    //         controller: "",
+    //         templateUrl: ""
+    //     });
+
+
 };
