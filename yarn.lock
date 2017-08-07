@@ -63,6 +63,10 @@ angular-router-browserify@0.0.2:
   version "0.0.2"
   resolved "https://registry.yarnpkg.com/angular-router-browserify/-/angular-router-browserify-0.0.2.tgz#7ae2fdf2e2e8c06c58cfc697af3e7a5e88642418"
 
+angular-sanitize@^1.6.3:
+  version "1.6.5"
+  resolved "https://registry.yarnpkg.com/angular-sanitize/-/angular-sanitize-1.6.5.tgz#b5625a817afad2ba58c333e98eef169a1c6f517a"
+
 angular-smart-table@^2.1.8:
   version "2.1.8"
   resolved "https://registry.yarnpkg.com/angular-smart-table/-/angular-smart-table-2.1.8.tgz#521f32a465e7334e073c5c1ae093c59c2b8fca50"

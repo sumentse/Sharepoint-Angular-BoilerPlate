@@ -35,6 +35,11 @@ gulp.task('browserify', function() {
         .pipe(gulp.dest('./public/js/'));
 });
 
+gulp.task('fontawesome', function(){
+    return gulp.src('./node_modules/font-awesome/fonts/**/*')
+        .pipe(gulp.dest('./public/css/fonts/'));
+});
+
 gulp.task('browserify:watchAll', function(){
     gulp.watch(['./app/**/*'], ['browserify']);
 });
