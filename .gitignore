@@ -1,5 +1,5 @@
 .DS_Store
 node_modules
 styles
-bundle.min.js
-bundle.min.map
+public/js
+public/css

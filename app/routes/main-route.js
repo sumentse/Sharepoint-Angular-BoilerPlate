@@ -1,5 +1,5 @@
 // @ngInject
-module.exports = function($stateProvider, $urlRouterProvider) {
+module.exports = ($stateProvider, $urlRouterProvider) => {
 
     $urlRouterProvider.otherwise("/");
     var viewPath = "views/";

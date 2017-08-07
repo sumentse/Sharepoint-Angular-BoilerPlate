@@ -2,7 +2,7 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
     module.exports = 'app.services';
 }
 
-(function(window, angular, undefined) {
+((window, angular, undefined) => {
     // @ngInject
     angular.module("app.services", [])
 		.provider("spService", require("./spRest.service"))

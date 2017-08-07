@@ -1,5 +1,5 @@
 // @ngInject
-module.exports = function(){
+module.exports = ()=>{
     
 	// $urlRouterProvider.otherwise("/");
 

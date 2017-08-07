@@ -12,14 +12,15 @@ var browserify = require('browserify'),
     notify = require('gulp-notify'),
     ngAnnotate = require('gulp-ng-annotate');
 
-gulp.task('browserify', function() {
-	// Grabs the app.js file
+gulp.task('script', function() {
+    // Grabs the app.js file
     return browserify('./app/app.js')
-    	// bundles it and creates a file called main.js
+        // bundles it and creates a file called main.js
         .bundle()
             .on('error', function(err){
                 console.log(err.message);
-                return notify("Browserify " + err).write(err);
+                notify("Browserify " + err).write(err);
+                this.emit("end");
             })
         .pipe(source('bundle.min.js'))
         .pipe(buffer())
@@ -40,12 +41,12 @@ gulp.task('fontawesome', function(){
         .pipe(gulp.dest('./public/css/fonts/'));
 });
 
-gulp.task('browserify:watchAll', function(){
-    gulp.watch(['./app/**/*'], ['browserify']);
+gulp.task('script:watchAll', function(){
+    gulp.watch(['./app/**/*'], ['script']);
 });
 
-gulp.task('browserify:watch', function () {
-    gulp.watch(['./app/app.js'], ['browserify']);
+gulp.task('script:watch', function () {
+    gulp.watch(['./app/app.js'], ['script']);
 });
 
 gulp.task('styles', function () {

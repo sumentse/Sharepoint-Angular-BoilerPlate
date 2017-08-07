@@ -2,7 +2,7 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
     module.exports = 'app.directives';
 }
 
-(function(window, angular, undefined) {
+((window, angular, undefined)=>{
     // @ngInject
     angular.module("app.directives", [
 			// require("angular-ui-router"),

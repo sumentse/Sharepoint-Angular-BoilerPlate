@@ -2,7 +2,7 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
     module.exports = 'app.controllers';
 }
 
-(function(window, angular, undefined) {
+((window, angular, undefined) => {
     // @ngInject
     angular.module("app.controllers", [])
         .controller("example.controller", require("./example.controller"))
