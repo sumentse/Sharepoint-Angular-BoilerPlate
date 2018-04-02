@@ -1,10 +1,10 @@
 // @ngInject
-module.exports = function() {
+module.exports = () => {
     var digestValue = angular.element(document.querySelector("#__REQUESTDIGEST")).val();
     return {
-        $get: /*@ngInject*/ function($http, $q) {
+        $get: /*@ngInject*/ ($http, $q) => {
             return {
-                getDigestValue: function(url, complete) {
+                getDigestValue: (url, complete) => {
 
                     if (digestValue != null) {
                         complete(digestValue);
@@ -18,17 +18,17 @@ module.exports = function() {
                                 "accept": "application/json;odata=verbose",
                                 "contentType": "text/xml"
                             }
-                        }).then(function(response) {
+                        }).then((response) => {
                             digestValue = response.data.d.GetContextWebInformation.FormDigestValue;
                             complete(digestValue);
-                        }, function(response) {
+                        }, (response) => {
                             alert("Cannot get digestValue.");
                         });
 
                     }
 
                 },
-                getFolderItems: function(url, folderPath, query, complete, failure) {
+                getFolderItems: (url, folderPath, query, complete, failure) => {
                     //folderpath should start with /sites/domain/foldername
                     $http({
                         url: url + "/_api/web/getFolderByServerRelativeUrl('" + folderPath + "')/Files" + query,
@@ -36,22 +36,22 @@ module.exports = function() {
                         headers: {
                             "Accept": "application/json; odata=verbose"
                         }
-                    }).then(function(response) {
+                    }).then((response) => {
                         complete(response);
-                    }, function(response) {
+                    }, (response) => {
                         failure(response);
                     });
                 },
-                getFolders: function(url, folderPath, query, complete, failure) {
+                getFolders: (url, folderPath, query, complete, failure) => {
                     $http({
                         url: url + "/_api/web/getFolderByServerRelativeUrl('" + folderPath + "')/Folders" + query,
                         method: "GET",
                         headers: {
                             "Accept": "application/json; odata=verbose"
                         }
-                    }).then(function(response) {
+                    }).then((response) => {
                         complete(response);
-                    }, function(response) {
+                    }, (response) => {
                         failure(response);
                     });
                 }

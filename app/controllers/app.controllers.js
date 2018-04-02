@@ -4,7 +4,9 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
 
 ((window, angular, undefined) => {
     // @ngInject
-    angular.module("app.controllers", [])
-        .controller("example.controller", require("./example.controller"))
+    angular.module("app.controllers", [
+    		require("./administration/administration.module")
+    	])
+        .controller("parent.controller", require("./parent.controller"))
 
 })(window, window.angular);

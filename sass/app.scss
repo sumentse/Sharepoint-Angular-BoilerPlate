@@ -1,15 +1,14 @@
-// $icon-font-path: "fonts/";
-// $fa-font-path: "fonts/";
-// @import "./node_modules/bootstrap-sass/assets/stylesheets/bootstrap";
-// @import "./node_modules/font-awesome/scss/font-awesome";
-// @import "modules/responsivemedia";
-
-@import "modules/msk_colors";
+@import "https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.css";
+@import "https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css";
+@import "core/msk_colors";
 
 [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
     display: none !important;
 }
 
 #angular-container {
+	@import "core/globals";
+// @import "./node_modules/bootstrap-sass/assets/stylesheets/bootstrap";
+// @import "core/responsivemedia";
 
 }

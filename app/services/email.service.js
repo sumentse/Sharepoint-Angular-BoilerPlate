@@ -1,12 +1,12 @@
 'use strict';
 
 // @ngInject
-module.exports = function() {
+module.exports = () => {
     var digestValue = angular.element(document.querySelector("#__REQUESTDIGEST")).val();
     return {
-        $get: /*@ngInject*/ function($http, $q) {
+        $get: /*@ngInject*/ ($http, $q) =>  {
             return {
-                getDigestValue: function(url, complete) {
+                getDigestValue: (url, complete) =>  {
 
                     if (digestValue != null) {
                         complete(digestValue);
@@ -20,10 +20,10 @@ module.exports = function() {
                                 "accept": "application/json;odata=verbose",
                                 "contentType": "text/xml"
                             }
-                        }).then(function(response) {
+                        }).then((response) => {
                             digestValue = response.data.d.GetContextWebInformation.FormDigestValue;
                             complete(digestValue);
-                        }, function(response) {
+                        }, (response) => {
                             alert("Cannot get digestValue.");
                         });
 
@@ -40,7 +40,7 @@ module.exports = function() {
                  * @param  {Promise} failure Response from server when email did not send
                  * @return {Void}
                  */
-                send: function(url, to, from, body, subject, complete, failure) {
+                send: (url, to, from, body, subject, complete, failure) => {
 
                     try {
                         if (!url) throw "You need to supply an url";
@@ -65,7 +65,7 @@ module.exports = function() {
                         }
                     };
 
-                    this.getDigestValue(url, function (digestValue) {
+                    this.getDigestValue(url,  (digestValue) => {
 
                         $http({
                             url: url + "/_api/SP.Utilities.Utility.SendEmail",
@@ -76,9 +76,9 @@ module.exports = function() {
                                 "Accept": "application/json;odata=verbose",
                                 "X-RequestDigest": digestValue
                             }
-                        }).then(function (response) {
+                        }).then( (response) => {
                             complete(response);
-                        }, function (response) {
+                        },  (response) => {
                             failure(response);
                         });
 

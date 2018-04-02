@@ -8,8 +8,6 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
 		.provider("spService", require("./spRest.service"))
 		.provider("spFolder", require("./spFolder.service"))
 		.provider("email", require("./email.service"))
-		.factory("_", function(){
-			return require("lodash");
-		})
+		.factory("_", ()=>require("lodash"))
 })(window, window.angular);
 

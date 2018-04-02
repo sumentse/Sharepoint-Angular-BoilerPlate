@@ -4,6 +4,8 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
 
 ((window, angular, undefined)=>{
     // @ngInject
-    angular.module("app.filters", [])
+    angular.module("app.filters", [
+    		require("./useful.filter")
+    	])
     
 })(window, window.angular);

@@ -1,7 +1,7 @@
 'use strict';
 
-// var $ = require("jquery");
-var angular = require("angular");
+require("babel-polyfill");
+let angular = require("angular");
 
 angular.module('app', [
 	require("./controllers/app.controllers"),
