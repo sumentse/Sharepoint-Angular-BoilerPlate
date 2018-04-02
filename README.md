@@ -39,4 +39,5 @@ This will open up a browser so you see the changes live on your screen without l
 * [Font Awesome](http://fontawesome.io/icons/)
 * [Bootstrap](http://getbootstrap.com/)
 * [JS ES6]
+* [UI Router](https://ui-router.github.io/ng1/)
 
