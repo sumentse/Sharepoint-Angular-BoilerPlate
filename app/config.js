@@ -1,5 +1,9 @@
 // @ngInject
-module.exports = ($provide)=>{
+module.exports = ($provide, emailProvider, spServiceProvider, spFolderProvider)=>{
+
+    spServiceProvider.urlDomain(CONST.rootFolder);
+    emailProvider.urlDomain(CONST.rootFolder);
+    spFolderProvider.urlDomain(CONST.rootFolder);
     
 	// $urlRouterProvider.otherwise("/");
 

@@ -1,17 +1,32 @@
 // @ngInject
 module.exports = () => {
+    let defaultDomain = "/";
     let digestValue = angular.element(document.querySelector("#__REQUESTDIGEST")).val();
     return {
+        urlDomain: (urlLink) => {
+            if (angular.isDefined(urlLink)) {
+                defaultDomain = urlLink;
+                return this;
+            } else {
+                return defaultDomain;
+            }
+        },
         $get: /*@ngInject*/ ($http, $q, _) => {
             return {
-                getDigestValue: (url, complete) => {
+                encodeString: (theString)=>{
+                    return encodeURIComponent(theString).replace(/'/g, "''");                    
+                },
+                getDigestValue: (complete = () => {}) => {
+
+                    let deferred = $q.defer();
 
                     if (digestValue != null) {
                         complete(digestValue);
+                        deferred.resolve(digestValue);
                     } else {
 
                         $http({
-                            url: `${url}/_api/contextinfo`,
+                            url: `${defaultDomain}/_api/contextinfo`,
                             async: true,
                             method: "POST",
                             headers: {
@@ -21,14 +36,111 @@ module.exports = () => {
                         }).then((response) => {
                             digestValue = response.data.d.GetContextWebInformation.FormDigestValue;
                             complete(digestValue);
+                            deferred.resolve(digestValue);
+
                         }, (response) => {
                             alert("Cannot get digestValue.");
+                            deferred.reject(response);
+
                         });
 
                     }
 
+                    return deferred.promise;
+
+
                 },
-                copyItems: function(config = {}, complete, failure, fileStatus) {
+                downloadAttachment: (downloadLink, options) => {
+
+                    let deffered = $q.defer();
+
+                    //Full File API support.
+
+                    try {
+
+                        if (window.FileReader && window.File && window.FileList && window.Blob) {
+
+                            if (angular.isUndefined(downloadLink) || !angular.isString(downloadLink)) {
+                                throw Error('You need to supply a download link');
+                            }
+
+                            if (angular.isUndefined(options.type)) {
+                                throw Error('You need to supply the type of file for options');
+                            }
+
+
+                            let originalFileName = downloadLink.split('/').pop();
+
+                            $http({
+                                url: downloadLink,
+                                method: 'GET',
+                                responseType: 'arraybuffer'
+                            }).then((response) => {
+
+                                //download file logic if Microsoft Internet Explorer
+                                let linkElement = document.createElement('a')
+
+                                let ieVersion = -1;
+                                let ua, re;
+                                if (navigator.appName == 'Microsoft Internet Explorer') {
+                                    ua = navigator.userAgent;
+                                    re = new RegExp("MSIE ([0-9]{1,}[\.0-9]{0,})");
+                                    if (re.exec(ua) != null)
+                                        ieVersion = parseFloat(RegExp.$1);
+                                } else if (navigator.appName == 'Netscape') {
+                                    ua = navigator.userAgent;
+                                    re = new RegExp("Trident/.*rv:([0-9]{1,}[\.0-9]{0,})");
+                                    if (re.exec(ua) != null)
+                                        ieVersion = parseFloat(RegExp.$1);
+                                }
+
+                                if (ieVersion > 0 && ieVersion <= 11) {
+
+                                    window.navigator.msSaveOrOpenBlob(new Blob([response.data], { type: options.type }), options.name ? options.name : originalFileName);
+
+                                } else if (window.navigator.userAgent.indexOf("Edge") > -1) {
+
+                                    window.navigator.msSaveOrOpenBlob(new Blob([response.data], { type: options.type }), options.name ? options.name : originalFileName);
+
+                                } else {
+                                    //if not using Internet explorer or Edge
+                                    let blob = new Blob([response.data], { type: options.type });
+                                    let url = window.URL.createObjectURL(blob);
+
+                                    linkElement.setAttribute('href', url);
+                                    linkElement.setAttribute('download', options.name ? options.name : originalFileName);
+
+                                    let clickEvent = new MouseEvent("click", {
+                                        "view": window,
+                                        "bubbles": true,
+                                        "cancelable": false
+                                    });
+
+                                    linkElement.dispatchEvent(clickEvent);
+                                }
+
+                                deffered.resolve(true);
+
+
+
+                            }, (response) => {
+                                deffered.reject(response);
+                            });
+
+                        } else {
+                            throw 'Cannot use these features as they are not supported in this browser';
+                        }
+
+                    } catch (err) {
+                        deffered.resolve(false);
+                        throw Error(err);
+                    }
+
+                    return deffered.promise;
+
+
+                },
+                copyItems: function(config = {}, complete = () => {}, failure = () => {}, fileStatus) {
                     //this is use to copy from one sharepoint list to another
                     let dataTransferProcess = $q.defer();
 
@@ -49,9 +161,9 @@ module.exports = () => {
                                     });
 
                                     for (let i = 0, totalItems = mapData.length; i < totalItems; i++) {
-                                        
+
                                         //check if AttachmentFiles key is there
-                                        if(!angular.isUndefined(mapData[i].AttachmentFiles)){
+                                        if (!angular.isUndefined(mapData[i].AttachmentFiles)) {
 
                                             if (!angular.isUndefined(mapData[i].AttachmentFiles.results)) {
                                                 //data show files
@@ -76,7 +188,7 @@ module.exports = () => {
                                                     delete mapData[i].AttachmentFiles;
                                                 }
                                             }
-                                            
+
                                         }
                                     }
 
@@ -84,7 +196,7 @@ module.exports = () => {
                                         deferred.resolve(mapData);
                                     } else {
 
-                                        if(!angular.isObject(config.keyMap)){
+                                        if (!angular.isObject(config.keyMap)) {
                                             throw Error('keyMap must be an object');
                                         }
 
@@ -197,9 +309,9 @@ module.exports = () => {
 
                     return deffered.promise;
                 },
-                searchUser: (url, query, limit, complete, failure) => {
+                searchUser: (url, query, limit, complete = () => {}, failure = () => {}) => {
                     $http({
-                        url: `${url}/_api/web//SiteUsers?$filter=Email ne '' and ( substringof('${query}',Title) or substringof('${query}',Email) )&$top=${limit}`,
+                        url: `${url}/_api/web/SiteUsers?$filter=Email ne '' and ( substringof('${query}',Title) or substringof('${query}',Email) )&$top=${limit}`,
                         method: 'GET',
                         headers: {
                             "Accept": "application/json; odata=verbose"
@@ -210,89 +322,70 @@ module.exports = () => {
                         failure(response);
                     });
                 },
-                addListFileAttachment: function(url, listname, id, fileName, file, complete, failure) {
-                    let getDigestValue = this.getDigestValue;
+                addListFileAttachment: async function(url, listname, id, fileName, file, complete = () => {}, failure = () => {}) {
 
-                    this.getFileBuffer(file).then((buffer) => {
+                    //cleans the string to correct name that is acceptable on sharepoint.
+                    try {
+                        let cleanStrFileName = fileName.replace(/^\.+|([|\/&;$%:#~?^{}*'@"<>()+,])|\.+$/g, "");
+                        cleanStrFileName = cleanStrFileName.substr(-128);
 
-                        //cleans the string to correct name that is acceptable on sharepoint.
-                        try {
-                            let cleanStrFileName = fileName.replace(/^\.+|([|\/&;$%:#~?^{}*'@"<>()+,])|\.+$/g, "");
-                            cleanStrFileName = cleanStrFileName.substr(-128);
+                        //you can only add or delete the list item but it will be different in documents
+                        $http({
+                            url: `${url}/_api/web/lists/GetByTitle('${listname}')/items(${id})/AttachmentFiles/add(FileName='${cleanStrFileName}')`,
+                            method: "POST",
+                            data: await this.getFileBuffer(file),
+                            processData: false,
+                            transformRequest: angular.identity,
+                            headers: {
+                                "Accept": "application/json;odata=verbose",
+                                "X-RequestDigest": await this.getDigestValue()
+                            }
+                        }).then((response) => {
+                            complete(response);
+                        }, (response) => {
+                            failure(response);
+                        });
 
 
-                            getDigestValue(url, (digestValue) => {
-                                //you can only add or delete the list item but it will be different in documents
-                                $http({
-                                    url: `${url}/_api/web/lists/GetByTitle('${listname}')/items(${id})/AttachmentFiles/add(FileName='${cleanStrFileName}')`,
-                                    method: "POST",
-                                    data: buffer,
-                                    processData: false,
-                                    transformRequest: (data) => {
-                                        return data;
-                                    },
-                                    headers: {
-                                        "Accept": "application/json;odata=verbose",
-                                        "X-RequestDigest": digestValue
-                                    }
-                                }).then((response) => {
-                                    complete(response);
-                                }, (response) => {
-                                    failure(response);
-                                });
+                    } catch (e) {
+                        throw Error("Filename was not supply");
+                    }
 
-                            });
-                        } catch (e) {
-                            throw Error("Filename was not supply");
-                        }
-
-                    });
 
                 },
-                addListFileAttachments: function(url, listname, id, files, status) {
+                addListFileAttachments: function(url, listname, id, AttachmentFiles, status) {
 
                     let deffered = $q.defer();
-                    let getDigestValue = this.getDigestValue;
 
                     try {
-                        let addItem = (i) => {
+                        let addItem = async(i) => {
 
-                            if (files.length !== i) {
+                            if (AttachmentFiles.files.length !== i) {
 
-                                this.getFileBuffer(files[i]).then((buffer) => {
+                                let cleanStrFileName = AttachmentFiles.files[i].name.replace(/^\.+|([|\/&;$%:#~?^{}*'@"<>()+,])|\.+$/g, "");
+                                cleanStrFileName = cleanStrFileName.substr(-128);
 
+                                //you can only add or delete the list item but it will be different in documents
+                                $http({
+                                    url: `${url}/_api/web/lists/GetByTitle('${listname}')/items(${id})/AttachmentFiles/add(FileName='${AttachmentFiles.prefix}${cleanStrFileName}')`,
+                                    method: "POST",
+                                    data: await this.getFileBuffer(AttachmentFiles.files[i]),
+                                    processData: false,
+                                    transformRequest: angular.identity,
+                                    headers: {
+                                        "Accept": "application/json;odata=verbose",
+                                        "X-RequestDigest": await this.getDigestValue()
+                                    }
+                                }).then((response) => {
+                                    status(response, i);
+                                    addItem(i + 1);
+                                }, (response) => {
 
-                                    let cleanStrFileName = files[i].name.replace(/^\.+|([|\/&;$%:#~?^{}*'@"<>()+,])|\.+$/g, "");
-                                    cleanStrFileName = cleanStrFileName.substr(-128);
-
-
-                                    getDigestValue(url, (digestValue) => {
-                                        //you can only add or delete the list item but it will be different in documents
-                                        $http({
-                                            url: `${url}/_api/web/lists/GetByTitle('${listname}')/items(${id})/AttachmentFiles/add(FileName='${cleanStrFileName}')`,
-                                            method: "POST",
-                                            data: buffer,
-                                            processData: false,
-                                            transformRequest: (data) => {
-                                                return data;
-                                            },
-                                            headers: {
-                                                "Accept": "application/json;odata=verbose",
-                                                "X-RequestDigest": digestValue
-                                            }
-                                        }).then((response) => {
-                                            status(response, i);
-                                            addItem(i + 1);
-                                        }, (response) => {
-
-                                            deffered.reject(response, i);
-
-                                        });
-
-                                    });
-
+                                    deffered.reject(response, i);
 
                                 });
+
+
 
                             } else {
                                 deffered.resolve(true);
@@ -311,70 +404,63 @@ module.exports = () => {
                     return deffered.promise;
 
                 },
-                deleteListFileAttachment: function(url, listname, id, fileName, complete, failure) {
-                    let getDigestValue = this.getDigestValue;
+                deleteListFileAttachment: async function(url, listname, id, fileName, complete = () => {}, failure = () => {}) {
 
-                    getDigestValue(url, (digestValue) => {
-                        $http({
-                            url: `${url}/_api/web/lists/GetByTitle('${listname}')/items(${id})/AttachmentFiles/getByFileName('${fileName}')`,
-                            method: "POST",
-                            headers: {
-                                "Accept": "application/json;odata=verbose",
-                                "X-Http-Method": "DELETE",
-                                "X-RequestDigest": digestValue,
-                            }
-                        }).then((response) => {
-                            complete(response);
-                        }, (response) => {
-                            failure(response);
-                        });
+                    $http({
+                        url: `${url}/_api/web/lists/GetByTitle('${listname}')/items(${id})/AttachmentFiles/getByFileName('${fileName}')`,
+                        method: "POST",
+                        headers: {
+                            "Accept": "application/json;odata=verbose",
+                            "X-Http-Method": "DELETE",
+                            "X-RequestDigest": await this.getDigestValue(),
+                        }
+                    }).then((response) => {
+                        complete(response);
+                    }, (response) => {
+                        failure(response);
                     });
+
                 },
                 deleteListFileAttachments: function(url, listname, id, fileNameList = [], status) {
                     let deffered = $q.defer();
-                    let getDigestValue = this.getDigestValue;
 
                     try {
-                        getDigestValue(url, (digestValue) => {
 
+                        let deleteItem = async(i) => {
+                            if (fileNameList.length !== i) {
+                                //check if it's a path or not
+                                let file = fileNameList[i];
+                                let hasPath = file.split('/').length > 1 ? true : false;
+                                let fileName = null;
 
-                            let deleteItem = (i) => {
-                                if (fileNameList.length !== i) {
-                                    //check if it's a path or not
-                                    let file = fileNameList[i];
-                                    let hasPath = file.split('/').length > 1 ? true : false;
-                                    let fileName = null;
-
-                                    if (hasPath) {
-                                        fileName = file.split('/').pop();
-                                    } else {
-                                        fileName = file;
-                                    }
-
-                                    $http({
-                                        url: `${url}/_api/web/lists/GetByTitle('${listname}')/items(${id})/AttachmentFiles/getByFileName('${fileName}')`,
-                                        method: "POST",
-                                        headers: {
-                                            "Accept": "application/json;odata=verbose",
-                                            "X-Http-Method": "DELETE",
-                                            "X-RequestDigest": digestValue,
-                                        }
-                                    }).then((response) => {
-                                        status(response, i);
-                                        deleteItem(i + 1);
-                                    }, (response) => {
-                                        deffered.reject(response, i);
-                                    });
-
+                                if (hasPath) {
+                                    fileName = file.split('/').pop();
                                 } else {
-                                    deffered.resolve(true);
+                                    fileName = file;
                                 }
-                            };
 
-                            deleteItem(0);
+                                $http({
+                                    url: `${url}/_api/web/lists/GetByTitle('${listname}')/items(${id})/AttachmentFiles/getByFileName('${fileName}')`,
+                                    method: "POST",
+                                    headers: {
+                                        "Accept": "application/json;odata=verbose",
+                                        "X-Http-Method": "DELETE",
+                                        "X-RequestDigest": await this.getDigestValue(),
+                                    }
+                                }).then((response) => {
+                                    status(response, i);
+                                    deleteItem(i + 1);
+                                }, (response) => {
+                                    deffered.reject(response, i);
+                                });
 
+                            } else {
+                                deffered.resolve(true);
+                            }
+                        };
 
-                        });
+                        deleteItem(0);
+
 
                     } catch (err) {
                         deffered.reject(err);
@@ -385,7 +471,7 @@ module.exports = () => {
                 getListItemType: (name) => {
                     return (`SP.Data.${name[0].toUpperCase() + name.substring(1)}ListItem`).replace(/\s/g, "_x0020_");
                 },
-                getListItem: (url, listname, id, query, complete, failure) => {
+                getListItem: (url, listname, id, query, complete = () => {}, failure = () => {}) => {
 
                     $http({
                         url: `${url}/_api/web/lists/getbytitle('${listname}')/items('${id}')${query}`,
@@ -401,7 +487,7 @@ module.exports = () => {
 
 
                 },
-                getListItems: (url, listname, query, complete, failure) => {
+                getListItems: (url, listname, query, complete = () => {}, failure = () => {}) => {
                     // Executing our items via an ajax request
                     $http({
                         url: `${url}/_api/web/lists/getbytitle('${listname}')/items${query}`,
@@ -416,35 +502,32 @@ module.exports = () => {
                     });
 
                 },
-                camlQuery: function(url, listname, xml, complete, failure) {
+                camlQuery: async function(url, listname, xml, complete = () => {}, failure = () => {}) {
 
 
-                    this.getDigestValue(url, (digestValue) => {
+                    let data = {
+                        "query": {
+                            "__metadata": { "type": "SP.CamlQuery" },
+                            "ViewXml": xml
+                        }
+                    };
 
-                        let data = {
-                            "query": {
-                                "__metadata": { "type": "SP.CamlQuery" },
-                                "ViewXml": xml
-                            }
-                        };
-
-                        $http({
-                            url: `${url}/_api/web/lists/getbytitle('${listname}')/GetItems`,
-                            method: "POST",
-                            data: data,
-                            headers: {
-                                "Content-Type": "application/json;odata=verbose",
-                                "Accept": "application/json;odata=verbose",
-                                "X-RequestDigest": digestValue
-                            }
-                        }).then((response) => {
-                            complete(response.data.d);
-                        }, (response) => {
-                            failure(response);
-                        });
-
-
+                    $http({
+                        url: `${url}/_api/web/lists/getbytitle('${listname}')/GetItems`,
+                        method: "POST",
+                        data: data,
+                        headers: {
+                            "Content-Type": "application/json;odata=verbose",
+                            "Accept": "application/json;odata=verbose",
+                            "X-RequestDigest": await this.getDigestValue()
+                        }
+                    }).then((response) => {
+                        complete(response.data.d);
+                    }, (response) => {
+                        failure(response);
                     });
+
+
                 },
                 getUserByID: function(url, ID) {
 
@@ -461,17 +544,18 @@ module.exports = () => {
                         }
                     }).then(async(response) => {
                         try {
-                            let { data: { d: { UserProfileProperties: { results } } } } = await this.getUserProfilePropertyFor(url, (response.data.d.LoginName.split('\\').pop()));
+                            let { data: { d: { UserProfileProperties } } } = await this.getUserProfilePropertyFor(url, (response.data.d.LoginName.split('\\').pop()));
 
-                            let UserProfileProperties = _.keyBy(results, 'Key');
-
-                            deffered.resolve(angular.merge(response, {
-                                data: {
-                                    d: {
-                                        UserProfileProperties
+                            deffered.resolve(
+                                angular.merge(response, {
+                                    data: {
+                                        d: {
+                                            UserProfileProperties
+                                        }
                                     }
-                                }
-                            }));
+                                })
+                            );
+
                         } catch (err) {
                             deffered.reject(err);
                         }
@@ -498,7 +582,33 @@ module.exports = () => {
                         }
                     }).then(
                         (response) => {
-                            deffered.resolve(response);
+
+                            try {
+                                let { data: { d: { UserProfileProperties: { results } } } } = response;
+
+                                let UserProfileProperties = _.keyBy(results, 'Key');
+                                delete response.data.d.UserProfileProperties.results;
+
+                                deffered.resolve(angular.merge(response, {
+                                    data: {
+                                        d: {
+                                            UserProfileProperties
+                                        }
+                                    }
+                                }));
+
+                            } catch (err) {
+
+                                delete response.data.d.GetPropertiesFor;
+
+                                deffered.resolve(angular.merge(response, {
+                                    data: {
+                                        d: {
+                                            UserProfileProperties: null
+                                        }
+                                    }
+                                }));
+                            }
                         },
                         (response) => {
                             deffered.reject(response);
@@ -517,6 +627,8 @@ module.exports = () => {
                             "Accept": "application/json; odata=verbose"
                         }
                     }).then((response) => {
+
+
 
                         let UserProfileProperties = _.keyBy(response.data.d.UserProfileProperties.results, 'Key');
                         delete response.data.d.UserProfileProperties.results;
@@ -552,46 +664,48 @@ module.exports = () => {
                     return deffered.promise;
 
                 },
-                addListItem: function(url, listname, metadata, AttachmentFiles = [], complete, failure, fileStatus) {
+                addListItem: async function(url, listname, documents, complete = () => {}, failure = () => {}, fileStatus) {
                     // Prepping our update
                     let item = angular.extend({
                         "__metadata": {
                             "type": this.getListItemType(listname)
                         }
-                    }, metadata);
+                    }, documents.metadata);
 
-                    this.getDigestValue(url, (digestValue) => {
-
-                        $http({
-                            url: `${url}/_api/web/lists/getbytitle('${listname}')/items`,
-                            method: "POST",
-                            data: angular.toJson(item),
-                            headers: {
-                                "Content-Type": "application/json;odata=verbose",
-                                "Accept": "application/json;odata=verbose",
-                                "X-RequestDigest": digestValue
-                            }
-                        }).then((response) => {
-                            if (AttachmentFiles.length === 0) {
+                    $http({
+                        url: `${url}/_api/web/lists/getbytitle('${listname}')/items`,
+                        method: "POST",
+                        data: angular.toJson(item),
+                        headers: {
+                            "Content-Type": "application/json;odata=verbose",
+                            "Accept": "application/json;odata=verbose",
+                            "X-RequestDigest": await this.getDigestValue()
+                        }
+                    }).then((response) => {
+                        if (documents.AttachmentFiles) {
+                            if (documents.AttachmentFiles.length === 0) {
                                 complete(response);
                             } else {
                                 complete(response);
-
-                                this.addListFileAttachments(url, listname, response.data.d.ID, AttachmentFiles, (status, index) => {
-                                    fileStatus(status, index);
-                                });
+                                this.addListFileAttachments(url, listname, response.data.d.ID, {
+                                        files: documents.AttachmentFiles,
+                                        prefix: documents.prefix || ''
+                                    },
+                                    (status, index) => {
+                                        fileStatus(response.data.d.ID, status, index);
+                                    });
 
                             }
-                        }, (response) => {
-                            failure(response);
-                        });
-
-
+                        } else {
+                            complete(response);
+                        }
+                    }, (response) => {
+                        failure(response);
                     });
 
 
                 },
-                addListItems: function(url, listname, itemsToAdd, complete, failure, fileStatus) {
+                addListItems: function(url, listname, itemsToAdd, complete = () => {}, failure = () => {}, fileStatus) {
 
 
                     if (!angular.isArray(itemsToAdd)) {
@@ -604,70 +718,65 @@ module.exports = () => {
 
                     let deffered = $q.defer();
 
-                    this.getDigestValue(url, (digestValue) => {
+                    let addItem = async(i) => {
+                        if (itemsToAdd.length !== i) {
+
+                            let AttachmentFiles = [];
+
+                            //check if there are attachments
+                            if (!angular.isUndefined(itemsToAdd[i].AttachmentFiles)) {
+                                //there is an attachment
+                                AttachmentFiles = itemsToAdd[i].AttachmentFiles;
+                                delete itemsToAdd[i].AttachmentFiles;
+                            }
 
 
-                        let addItem = (i) => {
-                            if (itemsToAdd.length !== i) {
+                            let item = angular.extend({
+                                "__metadata": {
+                                    "type": this.getListItemType(listname)
+                                }
+                            }, itemsToAdd[i]);
 
-                                let AttachmentFiles = [];
 
-                                //check if there are attachments
-                                if (!angular.isUndefined(itemsToAdd[i].AttachmentFiles)) {
-                                    //there is an attachment
-                                    AttachmentFiles = itemsToAdd[i].AttachmentFiles;
-                                    delete itemsToAdd[i].AttachmentFiles;
+                            $http({
+                                url: `${url}/_api/web/lists/getbytitle('${listname}')/items`,
+                                method: "POST",
+                                data: angular.toJson(item),
+                                headers: {
+                                    "Content-Type": "application/json;odata=verbose",
+                                    "Accept": "application/json;odata=verbose",
+                                    "X-RequestDigest": await this.getDigestValue()
+                                }
+                            }).then(async(response) => {
+
+                                if (AttachmentFiles.length === 0) {
+                                    complete(response, i);
+                                } else {
+                                    //there are attachments
+                                    complete(response, i);
+                                    await this.addListFileAttachments(url, listname, response.data.d.ID, { files: AttachmentFiles, prefix: '' }, (status, index) => {
+                                        fileStatus(response.data.d.ID, status, index);
+                                    });
                                 }
 
+                                addItem(i + 1);
 
-                                let item = angular.extend({
-                                    "__metadata": {
-                                        "type": this.getListItemType(listname)
-                                    }
-                                }, itemsToAdd[i]);
+                            }, (response) => {
+                                failure(response, i);
+                                deffered.resolve(false);
+                            });
+                        } else {
+                            //return a bool if function is done
+                            deffered.resolve(true);
+                        }
+                    };
 
-
-                                $http({
-                                    url: `${url}/_api/web/lists/getbytitle('${listname}')/items`,
-                                    method: "POST",
-                                    data: angular.toJson(item),
-                                    headers: {
-                                        "Content-Type": "application/json;odata=verbose",
-                                        "Accept": "application/json;odata=verbose",
-                                        "X-RequestDigest": digestValue
-                                    }
-                                }).then(async(response) => {
-
-                                    if (AttachmentFiles.length === 0) {
-                                        complete(response, i);
-                                    } else {
-                                        //there are attachments
-                                        complete(response, i);
-                                        await this.addListFileAttachments(url, listname, response.data.d.ID, AttachmentFiles, (status, index) => {
-                                            fileStatus(status, index);
-                                        });
-                                    }
-
-                                    addItem(i + 1);
-
-                                }, (response) => {
-                                    failure(response, i);
-                                    deffered.resolve(false);
-                                });
-                            } else {
-                                //return a bool if function is done
-                                deffered.resolve(true);
-                            }
-                        };
-
-                        addItem(0);
-
-                    });
+                    addItem(0);
 
                     return deffered.promise;
 
                 },
-                updateListItem: function(url, listname, id, metadata, complete, failure) {
+                updateListItem: async function(url, listname, id, metadata, complete = () => {}, failure = () => {}) {
 
                     //this will update the list item on restful api on sharepoint
                     let item = angular.extend({
@@ -676,29 +785,25 @@ module.exports = () => {
                         }
                     }, metadata);
 
-                    this.getDigestValue(url, (digestValue) => {
-
-                        $http({
-                            url: `${url}/_api/web/lists/getbytitle('${listname}')/items(${id})`,
-                            method: "POST",
-                            data: angular.toJson(item),
-                            headers: {
-                                "Accept": "application/json;odata=verbose",
-                                "Content-Type": "application/json;odata=verbose",
-                                "X-RequestDigest": digestValue,
-                                "X-HTTP-Method": "MERGE",
-                                "If-Match": "*"
-                            }
-                        }).then((response) => {
-                            complete(response);
-                        }, (response) => {
-                            failure(response);
-                        });
-
+                    $http({
+                        url: `${url}/_api/web/lists/getbytitle('${listname}')/items(${id})`,
+                        method: "POST",
+                        data: angular.toJson(item),
+                        headers: {
+                            "Accept": "application/json;odata=verbose",
+                            "Content-Type": "application/json;odata=verbose",
+                            "X-RequestDigest": await this.getDigestValue(),
+                            "X-HTTP-Method": "MERGE",
+                            "If-Match": "*"
+                        }
+                    }).then((response) => {
+                        complete(response);
+                    }, (response) => {
+                        failure(response);
                     });
 
                 },
-                updateListItems: function(url, listname, itemsToUpdate, complete, failure) {
+                updateListItems: function(url, listname, itemsToUpdate, complete = () => {}, failure = () => {}) {
 
                     if (!angular.isArray(itemsToUpdate)) {
                         throw Error("Third Param need to be an Array");
@@ -710,80 +815,72 @@ module.exports = () => {
 
                     let deffered = $q.defer();
 
-                    this.getDigestValue(url, (digestValue) => {
+                    let updateItem = async(i) => {
 
-                        let updateItem = (i) => {
+                        if (itemsToUpdate.length !== i) {
 
-                            if (itemsToUpdate.length !== i) {
+                            let ID = itemsToUpdate[i].ID;
+                            delete itemsToUpdate[i].ID;
 
-                                let ID = itemsToUpdate[i].ID;
-                                delete itemsToUpdate[i].ID;
+                            let item = angular.extend({
+                                "__metadata": {
+                                    "type": this.getListItemType(listname)
+                                }
+                            }, itemsToUpdate[i]);
 
-                                let item = angular.extend({
-                                    "__metadata": {
-                                        "type": this.getListItemType(listname)
-                                    }
-                                }, itemsToUpdate[i]);
-
-                                $http({
-                                    url: `${url}/_api/web/lists/getbytitle('${listname}')/items(${ID})`,
-                                    method: "POST",
-                                    data: angular.toJson(item),
-                                    headers: {
-                                        "Accept": "application/json;odata=verbose",
-                                        "Content-Type": "application/json;odata=verbose",
-                                        "X-RequestDigest": digestValue,
-                                        "X-HTTP-Method": "MERGE",
-                                        "If-Match": "*"
-                                    }
-                                }).then((response) => {
-                                    complete(response, i);
-                                    updateItem(i + 1);
-                                }, (response) => {
-                                    failure(response, i);
-                                    deffered.resolve(false);
-                                });
-                            } else {
-                                //return a bool if function is done
-                                deffered.resolve(true);
-                            }
-
+                            $http({
+                                url: `${url}/_api/web/lists/getbytitle('${listname}')/items(${ID})`,
+                                method: "POST",
+                                data: angular.toJson(item),
+                                headers: {
+                                    "Accept": "application/json;odata=verbose",
+                                    "Content-Type": "application/json;odata=verbose",
+                                    "X-RequestDigest": await this.getDigestValue(),
+                                    "X-HTTP-Method": "MERGE",
+                                    "If-Match": "*"
+                                }
+                            }).then((response) => {
+                                complete(response, i);
+                                updateItem(i + 1);
+                            }, (response) => {
+                                failure(response, i);
+                                deffered.resolve(false);
+                            });
+                        } else {
+                            //return a bool if function is done
+                            deffered.resolve(true);
                         }
 
-                        updateItem(0);
+                    }
 
-                    });
+                    updateItem(0);
+
 
                     return deffered.promise;
 
                 },
-                deleteListItem: function(url, listname, id, complete, failure) {
+                deleteListItem: async function(url, listname, id, complete = () => {}, failure = () => {}) {
                     // getting our item to delete, then executing a delete once it's been returned
 
-                    this.getDigestValue(url, (digestValue) => {
+                    $http({
+                        url: `${url}/_api/web/lists/getbytitle('${listname}')/items(${id})`,
+                        method: "POST",
+                        headers: {
+                            "Accept": "application/json;odata=verbose",
+                            "X-Http-Method": "DELETE",
+                            "X-RequestDigest": await this.getDigestValue(),
+                            "If-Match": "*"
+                        }
 
-                        $http({
-                            url: `${url}/_api/web/lists/getbytitle('${listname}')/items(${id})`,
-                            method: "POST",
-                            headers: {
-                                "Accept": "application/json;odata=verbose",
-                                "X-Http-Method": "DELETE",
-                                "X-RequestDigest": digestValue,
-                                "If-Match": "*"
-                            }
-
-                        }).then((response) => {
-                            complete(response);
-                        }, (response) => {
-                            failure(response);
-                        });
-
-
+                    }).then((response) => {
+                        complete(response);
+                    }, (response) => {
+                        failure(response);
                     });
 
 
                 },
-                deleteListItems: function(url, listname, itemsToDelete, complete, failure) {
+                deleteListItems: function(url, listname, itemsToDelete, complete = () => {}, failure = () => {}) {
 
                     if (!angular.isArray(itemsToDelete)) {
                         throw Error("Third Param need to be an Array");
@@ -795,37 +892,34 @@ module.exports = () => {
 
                     let deffered = $q.defer();
 
-                    this.getDigestValue(url, (digestValue) => {
+                    let deleteItem = async(i) => {
 
-                        let deleteItem = (i) => {
+                        if (itemsToDelete.length !== i) {
+                            $http({
+                                url: `${url}/_api/web/lists/getbytitle('${listname}')/items(${itemsToDelete[i]})`,
+                                method: "POST",
+                                headers: {
+                                    "Accept": "application/json;odata=verbose",
+                                    "X-Http-Method": "DELETE",
+                                    "X-RequestDigest": await this.getDigestValue(),
+                                    "IF-MATCH": "*"
+                                }
 
-                            if (itemsToDelete.length !== i) {
-                                $http({
-                                    url: `${url}/_api/web/lists/getbytitle('${listname}')/items(${itemsToDelete[i]})`,
-                                    method: "POST",
-                                    headers: {
-                                        "Accept": "application/json;odata=verbose",
-                                        "X-Http-Method": "DELETE",
-                                        "X-RequestDigest": digestValue,
-                                        "IF-MATCH": "*"
-                                    }
-
-                                }).then((response) => {
-                                    complete(response, i);
-                                    deleteItem(i + 1);
-                                }, (response) => {
-                                    failure(response, i);
-                                    deffered.resolve(false);
-                                });
-                            } else {
-                                deffered.resolve(true);
-                            }
-
+                            }).then((response) => {
+                                complete(response, i);
+                                deleteItem(i + 1);
+                            }, (response) => {
+                                failure(response, i);
+                                deffered.resolve(false);
+                            });
+                        } else {
+                            deffered.resolve(true);
                         }
 
-                        deleteItem(0);
+                    }
 
-                    });
+                    deleteItem(0);
+
 
                     return deffered.promise;
 

@@ -1,19 +1,29 @@
-'use strict';
-
 // @ngInject
-module.exports = () => {
-    var digestValue = angular.element(document.querySelector("#__REQUESTDIGEST")).val();
+module.exports = ()=>{
+    let defaultDomain = "/";
+    let digestValue = angular.element(document.querySelector("#__REQUESTDIGEST")).val();
     return {
-        $get: /*@ngInject*/ ($http, $q) =>  {
+        urlDomain: (urlLink)=>{
+            if(angular.isDefined(urlLink)){
+                defaultDomain = urlLink;
+                return this;
+            } else {
+                return defaultDomain;
+            }
+        },
+        $get: /*@ngInject*/ ($http, $q)=>{
             return {
-                getDigestValue: (url, complete) =>  {
+                getDigestValue: (complete = ()=>{}) => {
+
+                    let deferred = $q.defer();
 
                     if (digestValue != null) {
                         complete(digestValue);
+                        deferred.resolve(digestValue);
                     } else {
 
                         $http({
-                            url: url + "/_api/contextinfo",
+                            url: `${defaultDomain}/_api/contextinfo`,
                             async: true,
                             method: "POST",
                             headers: {
@@ -23,11 +33,18 @@ module.exports = () => {
                         }).then((response) => {
                             digestValue = response.data.d.GetContextWebInformation.FormDigestValue;
                             complete(digestValue);
+                            deferred.resolve(digestValue);
+
                         }, (response) => {
                             alert("Cannot get digestValue.");
+                            deferred.reject(response);
+
                         });
 
                     }
+
+                    return deferred.promise;
+
 
                 },
                 /**
@@ -40,10 +57,9 @@ module.exports = () => {
                  * @param  {Promise} failure Response from server when email did not send
                  * @return {Void}
                  */
-                send: (url, to, from, body, subject, complete, failure) => {
+                send: async function(to, from, body, subject, complete = ()=>{}, failure = ()=>{}) {
 
                     try {
-                        if (!url) throw "You need to supply an url";
                         if (!to) {
                             throw ("There is no email to be send to");
                         } else if (!angular.isArray(to)) {
@@ -51,7 +67,6 @@ module.exports = () => {
                         }
                         if (!body) throw "There is no message in the body";
                     } catch (e) {
-                        console.log(e);
                         return;
                     }
 
@@ -65,25 +80,24 @@ module.exports = () => {
                         }
                     };
 
-                    this.getDigestValue(url,  (digestValue) => {
-
-                        $http({
-                            url: url + "/_api/SP.Utilities.Utility.SendEmail",
-                            method: "POST",
-                            data: JSON.stringify(mail),
-                            headers: {
-                                "Content-Type": "application/json;odata=verbose",
-                                "Accept": "application/json;odata=verbose",
-                                "X-RequestDigest": digestValue
-                            }
-                        }).then( (response) => {
+                    $http({
+                        url: `${defaultDomain}/_api/SP.Utilities.Utility.SendEmail`,
+                        method: "POST",
+                        data: angular.toJson(mail),
+                        headers: {
+                            "Content-Type": "application/json;odata=verbose",
+                            "Accept": "application/json;odata=verbose",
+                            "X-RequestDigest": await this.getDigestValue()
+                        }
+                    }).then(
+                        (response)=>{
                             complete(response);
-                        },  (response) => {
-                            failure(response);
-                        });
+                        }, 
+                        (err)=>{
+                            failure(err);
+                        }
+                    );
 
-
-                    });
 
                 }
             };

@@ -31,11 +31,8 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                     });
 
                     scope.$on('currentPage', (event, args)=>{
-                        console.log(scope);
-                        console.log(args, 'num of pages');
-                        console.log(scope.inputPage, scope.numPages);
+
                         if(scope.currentPage < scope.numPages){
-                            console.log("this should execute");
                             scope.selectPage(scope.pages[scope.pages.length - 1]);
                         }
                         

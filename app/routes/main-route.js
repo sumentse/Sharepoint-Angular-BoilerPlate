@@ -1,8 +1,8 @@
 // @ngInject
-module.exports = ($stateProvider, $urlRouterProvider) => {
+module.exports = ($stateProvider, $urlRouterProvider, $locationProvider, CONST) => {
 
     $urlRouterProvider.otherwise("/");
-    var viewPath = "views/";
+    const viewPath = "views/";
 
     $stateProvider
         .state("", {
@@ -22,4 +22,8 @@ module.exports = ($stateProvider, $urlRouterProvider) => {
 
             }
         })
+
+    if(CONST.htmlMode){
+        $locationProvider.htmlMode(true);
+    }
 };
