@@ -10,10 +10,10 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
     angular.module("app.directives", [
     		require("./custom.directive"),
 			require("angular-ui-router"),
+            require("ng-file-upload"),
             // 'yaru22.angular-timeago',
             // require("angular-smart-table"),
             // require("angular-touch"),
-            // require("ng-file-upload"),
             // require("angular-sanitize"),
 			// require("angular-animate"),
 			// require("./stTableCustom"),

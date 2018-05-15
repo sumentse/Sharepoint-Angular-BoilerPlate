@@ -11,10 +11,10 @@ module.exports = () => {
                 return defaultDomain;
             }
         },
-        $get: /*@ngInject*/ ($http, $q, _) => {
+        $get: /*@ngInject*/ ($http, $q, _, $timeout, naturalSort) => {
             return {
-                encodeString: (theString)=>{
-                    return encodeURIComponent(theString).replace(/'/g, "''");                    
+                encodeString: (theString) => {
+                    return encodeURIComponent(theString).replace(/'/g, "''");
                 },
                 getDigestValue: (complete = () => {}) => {
 
@@ -50,9 +50,217 @@ module.exports = () => {
 
 
                 },
+                getDataURL: (file) => {
+                    let deferred = $q.defer();
+
+                    let reader = new FileReader();
+                    reader.onloadend = (e) => {
+                        deferred.resolve(e.target.result);
+                    }
+                    reader.onerror = (e) => {
+                        deferred.reject(e.target.error);
+                    }
+                    reader.readAsDataURL(file);
+                    return deferred.promise;
+                },
+                b64Upload: async function(url, listname, id, file, status = () => {}) {
+
+                    let deferred = $q.defer();
+                    //this will add chunking to list item for large file items
+                    //cleans the string to correct name that is acceptable on sharepoint.
+                    let theFile = (await this.getDataURL(file)).split(',')[1];
+                    let fileSize = theFile.length;
+                    let chunkSize = (1024 * 1024) * 45; // bytes
+                    let offset = 0;
+                    let counter = 0;
+                    let currentProgress = 0;
+                    let currentSize = 0;
+
+
+                    let chunkReaderBlock = async(_offset, length, _file) => {
+                        let chunk = _file.slice(_offset, length + _offset);
+                        offset += chunk.length;
+
+                        //upload a chunk
+                        $http({
+                            url: `${url}/_api/web/lists/GetByTitle('${listname}')/items(${id})/AttachmentFiles/add(FileName='part${counter}')`,
+                            method: "POST",
+                            data: chunk,
+                            processData: false,
+                            transformRequest: angular.identity,
+                            headers: {
+                                "Accept": "application/json;odata=verbose",
+                                "X-RequestDigest": await this.getDigestValue()
+                            },
+                            uploadEventHandlers: {
+                                progress: (e) => {
+
+                                    if(e.loaded === e.total){
+                                        currentProgress = currentProgress + e.total;
+                                    } else {
+                                        currentSize = e.loaded + currentProgress;
+                                    }
+
+                                    status(Math.ceil((currentSize / fileSize) * 100));
+                                }
+                            }
+                        }).then(
+                            (response) => {
+
+
+                                counter = counter + 1;
+
+                                if(offset >= fileSize){
+                                    return deferred.resolve(true);
+                                }                                
+
+                                chunkReaderBlock(offset, chunkSize, theFile);
+                            },
+                            (error) => {
+                                return deferred.reject(error);
+                            }
+                        );
+
+                    }
+
+                    chunkReaderBlock(offset, chunkSize, theFile);
+
+                    return deferred.promise;
+                },
+                b64Download: (base64Files = [], options = {}, status) => {
+
+                    if (!angular.isArray(base64Files)) {
+                        throw Error('You must supply an array of base64 files in order')
+                    }
+
+                    if (angular.isUndefined(options.name) || angular.isUndefined(options.type)) {
+                        throw Error('You must give a file name and file type');
+                    }
+
+                    angular.extend(options, {
+                        naturalSort: options.naturalSort || true
+                    });
+
+                    let promises = [];
+                    let fileParts = {};
+                    let total = 0;
+                    base64Files = options.naturalSort ? base64Files.sort(naturalSort) : base64Files;
+
+
+                    const b64toBlob = (b64Data, contentType = '', sliceSize = 512) => {
+                        const byteCharacters = atob(b64Data);
+                        const byteArrays = [];
+
+                        for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+                            const slice = byteCharacters.slice(offset, offset + sliceSize);
+
+                            const byteNumbers = new Array(slice.length);
+                            for (let i = 0; i < slice.length; i++) {
+                                byteNumbers[i] = slice.charCodeAt(i);
+                            }
+
+                            const byteArray = new Uint8Array(byteNumbers);
+
+                            byteArrays.push(byteArray);
+                        }
+
+                        const blob = new Blob(byteArrays, { type: contentType });
+                        return blob;
+                    }
+
+
+
+                    let getFile = (url) => {
+                        let deferred = $q.defer();
+
+                        $http({
+                            url,
+                            method: 'GET',
+                            responseType: 'text',
+                            eventHandlers: {
+                                progress: (e) => {
+                                    fileParts[url.split('/').pop()] = Math.ceil( (e.loaded / e.total) * 100 );
+                                    total = 0;
+                                    for (const [key, value] of Object.entries(fileParts)) {
+                                        total = total + value;
+                                    }
+
+                                    status( Math.ceil( ( total / (base64Files.length * 100) ) * 100 ) );
+
+                                }
+                            }
+                        }).then(
+                            (response) => {
+                                deferred.resolve(response);
+                            },
+                            (error) => {
+                                deferred.reject(error);
+                            }
+                        );
+
+                        return deferred.promise;
+                    }
+
+                    //base64Files is the file path src and should be in sorted order
+                    for (let i = 0, totalFiles = base64Files.length; i < totalFiles; i++) {
+                        fileParts[base64Files[i].split('/').pop()] = 0;
+                        promises.push(getFile(base64Files[i]));
+
+                    }
+
+                    $q.all(promises).then((data) => {
+                        let completeFile = _.reduce(data, (base64String, curr) => {
+                            base64String += curr.data;
+                            return base64String;
+                        }, "");
+
+                        let blob = b64toBlob(completeFile, options.type);
+
+                        let linkElement = document.createElement('a')
+
+                        let ieVersion = -1;
+                        let ua, re;
+                        if (navigator.appName == 'Microsoft Internet Explorer') {
+                            ua = navigator.userAgent;
+                            re = new RegExp("MSIE ([0-9]{1,}[\.0-9]{0,})");
+                            if (re.exec(ua) != null)
+                                ieVersion = parseFloat(RegExp.$1);
+                        } else if (navigator.appName == 'Netscape') {
+                            ua = navigator.userAgent;
+                            re = new RegExp("Trident/.*rv:([0-9]{1,}[\.0-9]{0,})");
+                            if (re.exec(ua) != null)
+                                ieVersion = parseFloat(RegExp.$1);
+                        }
+
+                        if (ieVersion > 0 && ieVersion <= 11) {
+
+                            window.navigator.msSaveOrOpenBlob(blob, options.name);
+
+                        } else if (window.navigator.userAgent.indexOf("Edge") > -1) {
+
+                            window.navigator.msSaveOrOpenBlob(blob, options.name);
+
+                        } else {
+                            //if not using Internet explorer or Edge
+                            let url = window.URL.createObjectURL(blob);
+
+                            linkElement.setAttribute('href', url);
+                            linkElement.setAttribute('download', options.name);
+
+                            let clickEvent = new MouseEvent("click", {
+                                "view": window,
+                                "bubbles": true,
+                                "cancelable": false
+                            });
+
+                            linkElement.dispatchEvent(clickEvent);
+                        }
+                    });
+
+                },
                 downloadAttachment: (downloadLink, options) => {
 
-                    let deffered = $q.defer();
+                    let deferred = $q.defer();
 
                     //Full File API support.
 
@@ -119,12 +327,12 @@ module.exports = () => {
                                     linkElement.dispatchEvent(clickEvent);
                                 }
 
-                                deffered.resolve(true);
+                                deferred.resolve(true);
 
 
 
                             }, (response) => {
-                                deffered.reject(response);
+                                deferred.reject(response);
                             });
 
                         } else {
@@ -132,11 +340,11 @@ module.exports = () => {
                         }
 
                     } catch (err) {
-                        deffered.resolve(false);
+                        deferred.resolve(false);
                         throw Error(err);
                     }
 
-                    return deffered.promise;
+                    return deferred.promise;
 
 
                 },
@@ -152,7 +360,7 @@ module.exports = () => {
                                 let sourceData = response.data.d.results;
 
                                 let getData = async() => {
-                                    let deffered = $q.defer();
+                                    let deferred = $q.defer();
                                     let itemsToAdd = [];
                                     let mapData = _.map(sourceData, (item, index) => {
                                         return _.pickBy(item, (v, k) => {
@@ -200,7 +408,7 @@ module.exports = () => {
                                             throw Error('keyMap must be an object');
                                         }
 
-                                        deffered.resolve(
+                                        deferred.resolve(
                                             _.map(mapData, (item) => {
                                                 return _.mapKeys(item, (v, k) => {
                                                     return config.keyMap[k] ? config.keyMap[k] : k;
@@ -209,7 +417,7 @@ module.exports = () => {
                                         );
                                     }
 
-                                    return deffered.promise;
+                                    return deferred.promise;
                                 };
 
 
@@ -250,7 +458,7 @@ module.exports = () => {
                         queryCondition = `${query}&$top=5000`;
                     }
 
-                    let deffered = $q.defer();
+                    let deferred = $q.defer();
 
                     $http({
                         url: `${url}/_api/web/lists/getbytitle('${listname}')/items${queryCondition}`,
@@ -259,29 +467,29 @@ module.exports = () => {
                             "Accept": "application/json; odata=verbose"
                         }
                     }).then((response) => {
-                        deffered.resolve(response.data.d.results.length);
+                        deferred.resolve(response.data.d.results.length);
                     }, (response) => {
-                        deffered.reject(response);
+                        deferred.reject(response);
                     });
 
-                    return deffered.promise;
+                    return deferred.promise;
                 },
                 getFileBuffer: (file) => {
-                    let deffered = $q.defer();
+                    let deferred = $q.defer();
 
                     let reader = new FileReader();
                     reader.onload = (e) => {
-                        deffered.resolve(e.target.result);
+                        deferred.resolve(e.target.result);
                     }
                     reader.onerror = (e) => {
-                        deffered.reject(e.target.error);
+                        deferred.reject(e.target.error);
                     }
                     reader.readAsArrayBuffer(file);
-                    return deffered.promise;
+                    return deferred.promise;
 
                 },
                 getFile: (fileURL, options = { blob: true, filename: null }) => {
-                    let deffered = $q.defer();
+                    let deferred = $q.defer();
 
                     $http({
                         url: fileURL,
@@ -289,27 +497,28 @@ module.exports = () => {
                         responseType: 'blob'
                     }).then((response) => {
                         if (options.blob) {
-                            deffered.resolve(response);
+                            deferred.resolve(response);
                         } else {
                             if (options.filename) {
                                 let blobObj = response.data;
                                 blobObj.lastModifiedDate = new Date();
                                 blobObj.name = options.filename;
-                                deffered.resolve(blobObj);
+                                deferred.resolve(blobObj);
                             } else {
                                 let blobObj = response.data;
                                 blobObj.lastModifiedData = new Date();
                                 blobObj.name = fileURL.split('/').pop();
-                                deffered.resolve(blobObj);
+                                deferred.resolve(blobObj);
                             }
                         }
                     }, (response) => {
-                        deffered.reject(response);
+                        deferred.reject(response);
                     });
 
-                    return deffered.promise;
+                    return deferred.promise;
                 },
                 searchUser: (url, query, limit, complete = () => {}, failure = () => {}) => {
+
                     $http({
                         url: `${url}/_api/web/SiteUsers?$filter=Email ne '' and ( substringof('${query}',Title) or substringof('${query}',Email) )&$top=${limit}`,
                         method: 'GET',
@@ -321,8 +530,11 @@ module.exports = () => {
                     }, (response) => {
                         failure(response);
                     });
+
                 },
-                addListFileAttachment: async function(url, listname, id, fileName, file, complete = () => {}, failure = () => {}) {
+                addListFileAttachment: async function(url, listname, id, fileName, file, uploadProgress = () => {}) {
+
+                    let deferred = $q.defer();
 
                     //cleans the string to correct name that is acceptable on sharepoint.
                     try {
@@ -339,11 +551,16 @@ module.exports = () => {
                             headers: {
                                 "Accept": "application/json;odata=verbose",
                                 "X-RequestDigest": await this.getDigestValue()
+                            },
+                            uploadEventHandlers: {
+                                progress: (e) => {
+                                    uploadProgress(Math.ceil( (e.loaded / e.total) * 100 ));
+                                }
                             }
                         }).then((response) => {
-                            complete(response);
+                            deferred.resolve(response);
                         }, (response) => {
-                            failure(response);
+                            deferred.reject(response);
                         });
 
 
@@ -351,11 +568,13 @@ module.exports = () => {
                         throw Error("Filename was not supply");
                     }
 
+                    return deferred.promise;
+
 
                 },
                 addListFileAttachments: function(url, listname, id, AttachmentFiles, status) {
 
-                    let deffered = $q.defer();
+                    let deferred = $q.defer();
 
                     try {
                         let addItem = async(i) => {
@@ -381,14 +600,14 @@ module.exports = () => {
                                     addItem(i + 1);
                                 }, (response) => {
 
-                                    deffered.reject(response, i);
+                                    deferred.reject(response, i);
 
                                 });
 
 
 
                             } else {
-                                deffered.resolve(true);
+                                deferred.resolve(true);
                             }
 
 
@@ -401,10 +620,11 @@ module.exports = () => {
                     }
 
 
-                    return deffered.promise;
+                    return deferred.promise;
 
                 },
-                deleteListFileAttachment: async function(url, listname, id, fileName, complete = () => {}, failure = () => {}) {
+                deleteListFileAttachment: async function(url, listname, id, fileName) {
+                    let deferred = $q.defer();
 
                     $http({
                         url: `${url}/_api/web/lists/GetByTitle('${listname}')/items(${id})/AttachmentFiles/getByFileName('${fileName}')`,
@@ -415,14 +635,16 @@ module.exports = () => {
                             "X-RequestDigest": await this.getDigestValue(),
                         }
                     }).then((response) => {
-                        complete(response);
+                        deferred.resolve(response);
                     }, (response) => {
-                        failure(response);
+                        deferred.reject(response);
                     });
+
+                    return deferred.promise;
 
                 },
                 deleteListFileAttachments: function(url, listname, id, fileNameList = [], status) {
-                    let deffered = $q.defer();
+                    let deferred = $q.defer();
 
                     try {
 
@@ -451,11 +673,11 @@ module.exports = () => {
                                     status(response, i);
                                     deleteItem(i + 1);
                                 }, (response) => {
-                                    deffered.reject(response, i);
+                                    deferred.reject(response, i);
                                 });
 
                             } else {
-                                deffered.resolve(true);
+                                deferred.resolve(true);
                             }
                         };
 
@@ -463,10 +685,10 @@ module.exports = () => {
 
 
                     } catch (err) {
-                        deffered.reject(err);
+                        deferred.reject(err);
                     }
 
-                    return deffered.promise;
+                    return deferred.promise;
                 },
                 getListItemType: (name) => {
                     return (`SP.Data.${name[0].toUpperCase() + name.substring(1)}ListItem`).replace(/\s/g, "_x0020_");
@@ -535,7 +757,7 @@ module.exports = () => {
                         throw Error('ID should be type Int');
                     }
 
-                    let deffered = $q.defer();
+                    let deferred = $q.defer();
                     $http({
                         url: `${url}/_api/web/getuserbyid(${ID})`,
                         method: 'GET',
@@ -546,7 +768,7 @@ module.exports = () => {
                         try {
                             let { data: { d: { UserProfileProperties } } } = await this.getUserProfilePropertyFor(url, (response.data.d.LoginName.split('\\').pop()));
 
-                            deffered.resolve(
+                            deferred.resolve(
                                 angular.merge(response, {
                                     data: {
                                         d: {
@@ -557,14 +779,14 @@ module.exports = () => {
                             );
 
                         } catch (err) {
-                            deffered.reject(err);
+                            deferred.reject(err);
                         }
 
                     }, (response) => {
-                        deffered.reject(response);
+                        deferred.reject(response);
                     })
 
-                    return deffered.promise;
+                    return deferred.promise;
                 },
                 getUserProfilePropertyFor: (url, accountName) => {
 
@@ -572,7 +794,7 @@ module.exports = () => {
                         throw Error('accountName should be type string');
                     }
 
-                    let deffered = $q.defer();
+                    let deferred = $q.defer();
 
                     $http({
                         url: `${url}/_api/SP.UserProfiles.PeopleManager/GetPropertiesFor(accountName=@v)?@v='mskcc\\${accountName}'&$select=UserProfileProperties`,
@@ -589,7 +811,7 @@ module.exports = () => {
                                 let UserProfileProperties = _.keyBy(results, 'Key');
                                 delete response.data.d.UserProfileProperties.results;
 
-                                deffered.resolve(angular.merge(response, {
+                                deferred.resolve(angular.merge(response, {
                                     data: {
                                         d: {
                                             UserProfileProperties
@@ -601,7 +823,7 @@ module.exports = () => {
 
                                 delete response.data.d.GetPropertiesFor;
 
-                                deffered.resolve(angular.merge(response, {
+                                deferred.resolve(angular.merge(response, {
                                     data: {
                                         d: {
                                             UserProfileProperties: null
@@ -611,14 +833,14 @@ module.exports = () => {
                             }
                         },
                         (response) => {
-                            deffered.reject(response);
+                            deferred.reject(response);
                         }
                     );
 
-                    return deffered.promise;
+                    return deferred.promise;
                 },
                 getCurrentUser: (url, query = '') => {
-                    let deffered = $q.defer();
+                    let deferred = $q.defer();
 
                     $http({
                         url: `${url}/_api/SP.UserProfiles.PeopleManager/GetMyProperties${query}`,
@@ -633,7 +855,7 @@ module.exports = () => {
                         let UserProfileProperties = _.keyBy(response.data.d.UserProfileProperties.results, 'Key');
                         delete response.data.d.UserProfileProperties.results;
 
-                        deffered.resolve(angular.merge(response, {
+                        deferred.resolve(angular.merge(response, {
                             data: {
                                 d: {
                                     UserProfileProperties
@@ -641,13 +863,13 @@ module.exports = () => {
                             }
                         }));
                     }, (response) => {
-                        deffered.reject(response);
+                        deferred.reject(response);
                     });
 
-                    return deffered.promise;
+                    return deferred.promise;
                 },
                 getPermissionLevels: (url, query = '') => {
-                    let deffered = $q.defer();
+                    let deferred = $q.defer();
 
                     $http({
                         url: `${url}/_api/web/currentuser/groups${query}`,
@@ -656,12 +878,12 @@ module.exports = () => {
                             "Accept": "application/json; odata=verbose"
                         }
                     }).then((response) => {
-                        deffered.resolve(response);
+                        deferred.resolve(response);
                     }, (response) => {
-                        deffered.reject(response);
+                        deferred.reject(response);
                     });
 
-                    return deffered.promise;
+                    return deferred.promise;
 
                 },
                 addListItem: async function(url, listname, documents, complete = () => {}, failure = () => {}, fileStatus) {
@@ -716,7 +938,7 @@ module.exports = () => {
                         throw Error("Third Param needs element in the Array");
                     }
 
-                    let deffered = $q.defer();
+                    let deferred = $q.defer();
 
                     let addItem = async(i) => {
                         if (itemsToAdd.length !== i) {
@@ -763,20 +985,22 @@ module.exports = () => {
 
                             }, (response) => {
                                 failure(response, i);
-                                deffered.resolve(false);
+                                deferred.resolve(false);
                             });
                         } else {
                             //return a bool if function is done
-                            deffered.resolve(true);
+                            deferred.resolve(true);
                         }
                     };
 
                     addItem(0);
 
-                    return deffered.promise;
+                    return deferred.promise;
 
                 },
                 updateListItem: async function(url, listname, id, metadata, complete = () => {}, failure = () => {}) {
+
+                    let deferred = $q.defer();
 
                     //this will update the list item on restful api on sharepoint
                     let item = angular.extend({
@@ -797,10 +1021,12 @@ module.exports = () => {
                             "If-Match": "*"
                         }
                     }).then((response) => {
-                        complete(response);
+                        deferred.resolve(response);
                     }, (response) => {
-                        failure(response);
+                        deferred.reject(response);
                     });
+
+                    return deferred.promise;
 
                 },
                 updateListItems: function(url, listname, itemsToUpdate, complete = () => {}, failure = () => {}) {
@@ -813,7 +1039,7 @@ module.exports = () => {
                         throw Error("Third Param needs element in the Array");
                     }
 
-                    let deffered = $q.defer();
+                    let deferred = $q.defer();
 
                     let updateItem = async(i) => {
 
@@ -844,11 +1070,11 @@ module.exports = () => {
                                 updateItem(i + 1);
                             }, (response) => {
                                 failure(response, i);
-                                deffered.resolve(false);
+                                deferred.resolve(false);
                             });
                         } else {
                             //return a bool if function is done
-                            deffered.resolve(true);
+                            deferred.resolve(true);
                         }
 
                     }
@@ -856,11 +1082,12 @@ module.exports = () => {
                     updateItem(0);
 
 
-                    return deffered.promise;
+                    return deferred.promise;
 
                 },
-                deleteListItem: async function(url, listname, id, complete = () => {}, failure = () => {}) {
+                deleteListItem: async function(url, listname, id) {
                     // getting our item to delete, then executing a delete once it's been returned
+                    let deferred = $q.defer();
 
                     $http({
                         url: `${url}/_api/web/lists/getbytitle('${listname}')/items(${id})`,
@@ -873,11 +1100,12 @@ module.exports = () => {
                         }
 
                     }).then((response) => {
-                        complete(response);
+                        deferred.resolve(response);
                     }, (response) => {
-                        failure(response);
+                        deferred.reject(response);
                     });
 
+                    return deferred.promise;
 
                 },
                 deleteListItems: function(url, listname, itemsToDelete, complete = () => {}, failure = () => {}) {
@@ -890,7 +1118,7 @@ module.exports = () => {
                         throw Error("Third Param needs element in the Array");
                     }
 
-                    let deffered = $q.defer();
+                    let deferred = $q.defer();
 
                     let deleteItem = async(i) => {
 
@@ -910,10 +1138,10 @@ module.exports = () => {
                                 deleteItem(i + 1);
                             }, (response) => {
                                 failure(response, i);
-                                deffered.resolve(false);
+                                deferred.resolve(false);
                             });
                         } else {
-                            deffered.resolve(true);
+                            deferred.resolve(true);
                         }
 
                     }
@@ -921,7 +1149,7 @@ module.exports = () => {
                     deleteItem(0);
 
 
-                    return deffered.promise;
+                    return deferred.promise;
 
                 }
             };

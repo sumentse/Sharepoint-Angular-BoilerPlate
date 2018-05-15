@@ -1,5 +1,5 @@
 // @ngInject
-module.exports = ($provide, emailProvider, spServiceProvider, spFolderProvider)=>{
+module.exports = ($provide, emailProvider, spServiceProvider, spFolderProvider, CONST)=>{
 
     spServiceProvider.urlDomain(CONST.rootFolder);
     emailProvider.urlDomain(CONST.rootFolder);
@@ -39,6 +39,8 @@ module.exports = ($provide, emailProvider, spServiceProvider, spFolderProvider)=
         };
         return $delegate;
     });
+
+    
 
 
 };

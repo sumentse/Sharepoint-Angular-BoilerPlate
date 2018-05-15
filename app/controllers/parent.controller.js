@@ -1,6 +1,5 @@
 // @ngInject
-module.exports = ($scope, spService, email)=>{
+module.exports = ($scope, spService, email, _)=>{
 	$scope.message = `Works`;
-
 
 };

@@ -5,9 +5,9 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
 ((window, angular, undefined) => {
     // @ngInject
     angular.module("app.services", [])
-		.provider("spService", require("./spRest.service"))
-		.provider("spFolder", require("./spFolder.service"))
-		.provider("email", require("./email.service"))
-		.factory("_", ()=>require("lodash"))
+        .provider("spService", require("./spRest.service"))
+        .provider("spFolder", require("./spFolder.service"))
+        .provider("email", require("./email.service"))
+        .factory("_", () => require("lodash"))
+        .factory("naturalSort", () => require("javascript-natural-sort"))
 })(window, window.angular);
-
