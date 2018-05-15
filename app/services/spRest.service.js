@@ -11,7 +11,7 @@ module.exports = () => {
                 return defaultDomain;
             }
         },
-        $get: /*@ngInject*/ ($http, $q, _, $timeout, naturalSort) => {
+        $get: /*@ngInject*/ ($http, $q, _, naturalSort) => {
             return {
                 encodeString: (theString) => {
                     return encodeURIComponent(theString).replace(/'/g, "''");
