@@ -668,6 +668,31 @@ module.exports = () => {
                     return deferred.promise;
 
                 },
+                emptyListFileAttachments: function(url, listname, id, status){
+                    //this method will remove all the file attachment
+                    let deferred = $q.defer();
+
+                    this.getListItem(url, listname, id, '?$expand=AttachmentFiles',
+                        async (res)=>{
+
+                            let documents = _.reduce(res.data.d.AttachmentFiles.results, (files, curr)=>{
+                                files.push(curr.ServerRelativeUrl)
+                                return files;
+                            }, []);
+
+                            await this.deleteListFileAttachments(url, listname, id, documents, (response, index)=>{
+                                status(response, index);
+                            });
+
+                            deferred.resolve(true);
+                        },
+                        (err)=>{
+                            deferred.reject(err);
+                        }
+                    );
+
+                    return deferred.promise;
+                },
                 deleteListFileAttachments: function(url, listname, id, fileNameList = [], status) {
                     let deferred = $q.defer();
 
