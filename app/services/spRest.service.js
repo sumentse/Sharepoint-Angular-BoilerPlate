@@ -79,13 +79,8 @@ module.exports = () => {
                         return deferred.reject("Password must be greater than 8 characters");
                     }
 
-                    if(password.length > 8){
-                        theFile = CryptoJS.AES.encrypt(theFile, password).toString();
-                    }
-
-
-                    let fileSize = theFile.length;
-                    let chunkSize = (1024 * 1024) * 45; // bytes
+                    let fileSize = password.length > 8 ? Math.ceil( theFile.length + (theFile.length * (33/100)) ) : theFile.length;
+                    let chunkSize = password.length > 8 ? (1024 * 1024) * 36 : (1024 * 1024) * 49; //in bytes because sharepoint max is 52428800 bytes
                     let offset = 0;
                     let counter = 0;
                     let currentProgress = 0;
@@ -94,13 +89,19 @@ module.exports = () => {
 
                     let chunkReaderBlock = async(_offset, length, _file) => {
                         let chunk = _file.slice(_offset, length + _offset);
+
+                        if(chunk.length === 0){
+                            return deferred.resolve(true);                            
+                        }
+
                         offset += chunk.length;
+
 
                         //upload a chunk
                         $http({
                             url: `${url}/_api/web/lists/GetByTitle('${listname}')/items(${id})/AttachmentFiles/add(FileName='part${counter}')`,
                             method: "POST",
-                            data: chunk,
+                            data: password.length > 8 ? CryptoJS.AES.encrypt(chunk, password).toString() : chunk,
                             processData: false,
                             transformRequest: angular.identity,
                             headers: {
@@ -124,10 +125,6 @@ module.exports = () => {
 
 
                                 counter = counter + 1;
-
-                                if(offset >= fileSize){
-                                    return deferred.resolve(true);
-                                }                                
 
                                 chunkReaderBlock(offset, chunkSize, theFile);
                             },
@@ -229,15 +226,18 @@ module.exports = () => {
 
                     $q.all(promises).then((data) => {
                         let completeFile = _.reduce(data, (base64String, curr) => {
-                            base64String += curr.data;
+
+                            if(password.length > 8){
+                                let bytes = CryptoJS.AES.decrypt(curr.data, password);
+                                base64String += bytes.toString(CryptoJS.enc.Utf8);
+                            } else {
+                                base64String += curr.data;
+                            }
+
                             return base64String;
                         }, "");
 
 
-                        if(password.length > 8){
-                            let bytes = CryptoJS.AES.decrypt(completeFile, password);
-                            completeFile = bytes.toString(CryptoJS.enc.Utf8);
-                        }
 
                         let blob = b64toBlob(completeFile.split(',')[1], options.type);
 
