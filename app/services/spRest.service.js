@@ -1,5 +1,8 @@
 // @ngInject
 module.exports = () => {
+
+    const CryptoJS = require("crypto-js");
+
     let defaultDomain = "/";
     let digestValue = angular.element(document.querySelector("#__REQUESTDIGEST")).val();
     return {
@@ -63,12 +66,24 @@ module.exports = () => {
                     reader.readAsDataURL(file);
                     return deferred.promise;
                 },
-                b64Upload: async function(url, listname, id, file, status = () => {}) {
+                b64Upload: async function(url, listname, id, file, password = "", status = () => {}) {
 
                     let deferred = $q.defer();
                     //this will add chunking to list item for large file items
-                    //cleans the string to correct name that is acceptable on sharepoint.
-                    let theFile = (await this.getDataURL(file)).split(',')[1];
+
+                    //base64
+                    let theFile = await this.getDataURL(file);
+                    
+                    //encrypt if there is a password
+                    if(password.length >= 1 && password.length <= 8){
+                        return deferred.reject("Password must be greater than 8 characters");
+                    }
+
+                    if(password.length > 8){
+                        theFile = CryptoJS.AES.encrypt(theFile, password).toString();
+                    }
+
+
                     let fileSize = theFile.length;
                     let chunkSize = (1024 * 1024) * 45; // bytes
                     let offset = 0;
@@ -127,7 +142,7 @@ module.exports = () => {
 
                     return deferred.promise;
                 },
-                b64Download: (base64Files = [], options = {}, status) => {
+                b64Download: (base64Files = [], options = {}, password = "", status) => {
 
                     if (!angular.isArray(base64Files)) {
                         throw Error('You must supply an array of base64 files in order')
@@ -136,6 +151,10 @@ module.exports = () => {
                     if (angular.isUndefined(options.name) || angular.isUndefined(options.type)) {
                         throw Error('You must give a file name and file type');
                     }
+
+                    if(password.length >= 1 && password.length <= 8){
+                        return deferred.reject("Password must be greater than 8 characters");
+                    }        
 
                     angular.extend(options, {
                         naturalSort: options.naturalSort || true
@@ -214,7 +233,13 @@ module.exports = () => {
                             return base64String;
                         }, "");
 
-                        let blob = b64toBlob(completeFile, options.type);
+
+                        if(password.length > 8){
+                            let bytes = CryptoJS.AES.decrypt(completeFile, password);
+                            completeFile = bytes.toString(CryptoJS.enc.Utf8);
+                        }
+
+                        let blob = b64toBlob(completeFile.split(',')[1], options.type);
 
                         let linkElement = document.createElement('a')
 

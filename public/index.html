@@ -12,6 +12,8 @@
 			<!-- <div ui-view></div> -->
 			<div ng-controller="parent.controller">
 				<h1>Boilerplate <span ng-bind="message"></span></h1>
+				 <button ngf-select="uploadFile($file)" name="file">Upload File</button>
+				 <button ng-click="downloadFile()">Download File</button>
 			</div>
 		</div>
 		<script src="js/bundle.min.js"></script>
