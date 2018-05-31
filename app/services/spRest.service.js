@@ -73,13 +73,13 @@ module.exports = () => {
 
                     //base64
                     let theFile = await this.getDataURL(file);
-                    
+
                     //encrypt if there is a password
-                    if(password.length >= 1 && password.length <= 8){
+                    if (password.length >= 1 && password.length <= 8) {
                         return deferred.reject("Password must be greater than 8 characters");
                     }
 
-                    let fileSize = password.length > 8 ? Math.ceil( theFile.length + (theFile.length * (33/100)) ) : theFile.length;
+                    let fileSize = password.length > 8 ? Math.ceil(theFile.length + (theFile.length * (33 / 100))) : theFile.length;
                     let chunkSize = password.length > 8 ? (1024 * 1024) * 36 : (1024 * 1024) * 49; //in bytes because sharepoint max is 52428800 bytes
                     let offset = 0;
                     let counter = 0;
@@ -90,8 +90,8 @@ module.exports = () => {
                     let chunkReaderBlock = async(_offset, length, _file) => {
                         let chunk = _file.slice(_offset, length + _offset);
 
-                        if(chunk.length === 0){
-                            return deferred.resolve(true);                            
+                        if (chunk.length === 0) {
+                            return deferred.resolve(true);
                         }
 
                         offset += chunk.length;
@@ -111,7 +111,7 @@ module.exports = () => {
                             uploadEventHandlers: {
                                 progress: (e) => {
 
-                                    if(e.loaded === e.total){
+                                    if (e.loaded === e.total) {
                                         currentProgress = currentProgress + e.total;
                                     } else {
                                         currentSize = e.loaded + currentProgress;
@@ -149,9 +149,9 @@ module.exports = () => {
                         throw Error('You must give a file name and file type');
                     }
 
-                    if(password.length >= 1 && password.length <= 8){
+                    if (password.length >= 1 && password.length <= 8) {
                         return deferred.reject("Password must be greater than 8 characters");
-                    }        
+                    }
 
                     angular.extend(options, {
                         naturalSort: options.naturalSort || true
@@ -195,13 +195,13 @@ module.exports = () => {
                             responseType: 'text',
                             eventHandlers: {
                                 progress: (e) => {
-                                    fileParts[url.split('/').pop()] = Math.ceil( (e.loaded / e.total) * 100 );
+                                    fileParts[url.split('/').pop()] = Math.ceil((e.loaded / e.total) * 100);
                                     total = 0;
                                     for (const [key, value] of Object.entries(fileParts)) {
                                         total = total + value;
                                     }
 
-                                    status( Math.ceil( ( total / (base64Files.length * 100) ) * 100 ) );
+                                    status(Math.ceil((total / (base64Files.length * 100)) * 100));
 
                                 }
                             }
@@ -227,7 +227,7 @@ module.exports = () => {
                     $q.all(promises).then((data) => {
                         let completeFile = _.reduce(data, (base64String, curr) => {
 
-                            if(password.length > 8){
+                            if (password.length > 8) {
                                 let bytes = CryptoJS.AES.decrypt(curr.data, password);
                                 base64String += bytes.toString(CryptoJS.enc.Utf8);
                             } else {
@@ -579,7 +579,7 @@ module.exports = () => {
                             },
                             uploadEventHandlers: {
                                 progress: (e) => {
-                                    uploadProgress(Math.ceil( (e.loaded / e.total) * 100 ));
+                                    uploadProgress(Math.ceil((e.loaded / e.total) * 100));
                                 }
                             }
                         }).then((response) => {
@@ -668,25 +668,25 @@ module.exports = () => {
                     return deferred.promise;
 
                 },
-                emptyListFileAttachments: function(url, listname, id, status){
+                emptyListFileAttachments: function(url, listname, id, status) {
                     //this method will remove all the file attachment
                     let deferred = $q.defer();
 
                     this.getListItem(url, listname, id, '?$expand=AttachmentFiles',
-                        async (res)=>{
+                        async(res) => {
 
-                            let documents = _.reduce(res.data.d.AttachmentFiles.results, (files, curr)=>{
+                            let documents = _.reduce(res.data.d.AttachmentFiles.results, (files, curr) => {
                                 files.push(curr.ServerRelativeUrl)
                                 return files;
                             }, []);
 
-                            await this.deleteListFileAttachments(url, listname, id, documents, (response, index)=>{
+                            await this.deleteListFileAttachments(url, listname, id, documents, (response, index) => {
                                 status(response, index);
                             });
 
                             deferred.resolve(true);
                         },
-                        (err)=>{
+                        (err) => {
                             deferred.reject(err);
                         }
                     );
@@ -774,31 +774,267 @@ module.exports = () => {
                     });
 
                 },
-                camlQuery: async function(url, listname, xml, complete = () => {}, failure = () => {}) {
+                camlQuery: function(url, queryOption) {
+
+                    if (!SP) {
+                        new Error('SP Core does not exist');
+                    }
+
+                    let parser = new DOMParser();
+                    let oSerializer = new XMLSerializer();
+                    let context = angular.isDefined(url) ? new SP.ClientContext(url) : new SP.ClientContext.get_current();
+                    let spItems;
+                    let position;
+                    let nextPagingInfo;
+                    let previousPagingInfo;
+                    let pageIndex = 1;
+                    let pageSize = angular.isDefined(queryOption.pageSize) ? queryOption.pageSize : 25;
+                    let list = context.get_web().get_lists().getByTitle(queryOption.listName);
+                    let camlQuery = new SP.CamlQuery();
+                    let countQuery = new SP.CamlQuery();
+                    let query;
+                    let doc;
+                    let pageInformation;
+                    let items;
+
+                    return {
+                        setXML: function(xml) {
+                            query = xml;
+                            doc = parser.parseFromString(query, "text/xml");
+                        },
+                        next: function() {
+                            //note: when implementing this it is best to use the try and catch for type Error
+                            return new Promise(async(resolve) => {
+                                if (nextPagingInfo) {
+                                    pageIndex = pageIndex + 1;
+                                    position = new SP.ListItemCollectionPosition();
+                                    position.set_pagingInfo(nextPagingInfo);
+                                    let {items, pageInformation} = await this.GetListItems();
+                                    resolve({items, pageInformation});
+
+                                } else {
+                                    resolve();
+                                }
+
+                            })
+                        },
+                        back: function() {
+
+                            return new Promise(async(resolve) => {
+                                if (pageIndex <= 1) {
+                                    return resolve();
+                                }
+
+                                pageIndex = pageIndex - 1;
+                                position = new SP.ListItemCollectionPosition();
+                                position.set_pagingInfo(previousPagingInfo);
+                                let {items, pageInformation} = await this.GetListItems();
+                                resolve({items, pageInformation});
+
+                            });
+                        },
+                        getPageInforation: function() {
+                            return pageInformation;
+                        },
+                        getPaginationCount: function() {
+                            //it's best to use this if there are not too many items
+                            return new Promise((resolve, reject) => {
+
+                                //check if there is a where node
+                                let nodes = doc.querySelectorAll('Where');
+                                if (nodes.length > 0) {
+                                    let [where] = nodes;
+
+                                    countQuery.set_viewXml(`
+                                        <View>
+                                            <Query>
+                                                <ViewFields>
+                                                    <FieldRef Name='ID'/>
+                                                </ViewFields>
+                                                ${oSerializer.serializeToString(where)}
+                                            </Query>
+                                            <RowLimit>5000</RowLimit>
+                                        </View>
+                                    `);
+
+                                } else {
+                                    countQuery.set_viewXml(`
+                                        <View>
+                                            <Query>
+                                                <ViewFields>
+                                                    <FieldRef Name='ID'/>
+                                                </ViewFields>
+                                            </Query>
+                                            <RowLimit>5000</RowLimit>
+                                        </View>
+                                    `);
+                                }
 
 
-                    let data = {
-                        "query": {
-                            "__metadata": { "type": "SP.CamlQuery" },
-                            "ViewXml": xml
+                                spItems = list.getItems(countQuery);
+
+                                context.load(spItems);
+                                context.executeQueryAsync(
+                                    function() {
+                                        let listEnumerator = spItems.getEnumerator();
+                                        let counter = 0;
+                                        let totalPages = 0;
+                                        let pages = [];
+
+                                        while (listEnumerator.moveNext()) {
+                                            counter = counter + 1;
+                                        }
+
+                                        totalPages = Math.ceil(counter/pageSize);
+
+                                        for(let i = 1; i <= totalPages; i++){
+                                            pages.push(i);
+                                        }
+
+                                        resolve({
+                                            total: counter,
+                                            pages: pages
+                                        });
+
+                                    },
+                                    function(sender, args) {
+                                        reject('Failed to get items. Error:' + args.get_message());
+                                    }
+                                );
+
+
+                            });
+                        },
+                        GetListItems: function(goToPage) {
+                            //Set the next or back list items collection position 
+                            //First time the position will be null 
+                            let self = this;
+
+                            return new Promise((resolve, reject) => {
+
+
+
+                                // Create a CAML view that retrieves all contacts items  with assigne RowLimit value to the query 
+                                if(goToPage){
+
+                                    camlQuery.set_listItemCollectionPosition(null);
+                                    camlQuery.set_viewXml(`<View>${query}<RowLimit>${pageSize * goToPage}</RowLimit></View>`);
+                                    spItems = list.getItems(camlQuery);
+                                    
+                                    context.load(spItems);
+                                    context.executeQueryAsync(
+                                        function() {
+                                            let listEnumerator = spItems.getEnumerator();
+                                            items = [];
+
+                                            let nodes = doc.querySelectorAll('ViewFields FieldRef');
+
+                                            while (listEnumerator.moveNext()) {
+                                                let list = listEnumerator.get_current();
+                                                let item = {};
+
+                                                for (let i = 0, nodeLength = nodes.length; i < nodeLength; i++) {
+                                                    let field = nodes[i].getAttribute('Name');
+                                                    let json = nodes[i].getAttribute('JSON');
+                                                    item[field] = json ? JSON.parse(list.get_item(field)) : list.get_item(field);
+                                                }
+
+                                                items.push(item);
+                                            }
+
+                                            pageIndex = goToPage;
+                                            items = items.slice( (goToPage - 1) * pageSize );
+                                            self.managePagerControl(goToPage);
+                                            
+                                            resolve({
+                                                items,
+                                                pageInformation
+                                            });
+
+                                        },
+                                        function(sender, args) {
+                                            reject('Failed to get items. Error:' + args.get_message());
+                                        }
+                                    );
+
+
+                                } else {
+                                    pageIndex === 1 ? camlQuery.set_listItemCollectionPosition(null) : camlQuery.set_listItemCollectionPosition(position);
+                                    camlQuery.set_viewXml(`<View>${query}<RowLimit>${pageSize}</RowLimit></View>`);
+                                    spItems = list.getItems(camlQuery);
+
+                                    context.load(spItems);
+                                    context.executeQueryAsync(
+                                        function() {
+                                            let listEnumerator = spItems.getEnumerator();
+                                            items = [];
+
+                                            let nodes = doc.querySelectorAll('ViewFields FieldRef');
+
+                                            while (listEnumerator.moveNext()) {
+                                                let list = listEnumerator.get_current();
+                                                let item = {};
+
+                                                for (let i = 0, nodeLength = nodes.length; i < nodeLength; i++) {
+                                                    let field = nodes[i].getAttribute('Name');
+                                                    let json = nodes[i].getAttribute('JSON');
+                                                    item[field] = json ? JSON.parse(list.get_item(field)) : list.get_item(field);
+                                                }
+
+                                                items.push(item);
+                                            }
+
+
+                                            self.managePagerControl();
+                                            resolve({
+                                                items,
+                                                pageInformation
+                                            });
+
+                                        },
+                                        function(sender, args) {
+                                            reject('Failed to get items. Error:' + args.get_message());
+                                        }
+                                    );
+                                }
+
+
+
+                            });
+
+
+                        },
+                        managePagerControl: function(pagerIndex) {
+
+
+                            if (spItems.get_listItemCollectionPosition()) {
+                                nextPagingInfo = spItems.get_listItemCollectionPosition().get_pagingInfo();
+                            } else {
+                                nextPagingInfo = null;
+                            }
+
+                            //The following code line shall add page information between the next and back buttons 
+                            if(pagerIndex){
+                                pageInformation = (((pageIndex - 1) * pageSize) + 1) + " - " + spItems.get_count();
+                            } else {
+                                pageInformation = (((pageIndex - 1) * pageSize) + 1) + " - " + ((pageIndex * pageSize) - (pageSize - spItems.get_count()));
+                            }
+
+                            let nodes = doc.querySelectorAll('OrderBy FieldRef');
+
+                            //has an orderBy field
+                            if (nodes.length > 0) {
+                                let [childNode] = nodes;
+                                let sortColumn = childNode.getAttribute('Name');
+                                previousPagingInfo = `PagedPrev=TRUE&Paged=TRUE&p_ID=${items[0].ID}&p_${sortColumn}=${encodeURIComponent(items[0][sortColumn])}`;
+                            } else {
+                                previousPagingInfo = `PagedPrev=TRUE&Paged=TRUE&p_ID=${items[0].ID}`;
+                            }                                
+
+
+
                         }
-                    };
-
-                    $http({
-                        url: `${url}/_api/web/lists/getbytitle('${listname}')/GetItems`,
-                        method: "POST",
-                        data: data,
-                        headers: {
-                            "Content-Type": "application/json;odata=verbose",
-                            "Accept": "application/json;odata=verbose",
-                            "X-RequestDigest": await this.getDigestValue()
-                        }
-                    }).then((response) => {
-                        complete(response.data.d);
-                    }, (response) => {
-                        failure(response);
-                    });
-
+                    }
 
                 },
                 getUserByID: function(url, ID) {

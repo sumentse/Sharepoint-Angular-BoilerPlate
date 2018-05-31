@@ -1,13 +1,104 @@
 // @ngInject
-module.exports = ($scope, spService, email, _)=>{
-	$scope.message = `Works`;
+module.exports = ($scope, spService, email, _) => {
+    $scope.message = `Works`;
 
-	$scope.uploadFiles = (file, invalid)=>{
+    $scope.pageState = {
+        totalCount: 0,
+        data: [],
+        pageInformation: '0-0',
+        pages: []
+    };
 
-	};
+    // let query = new spService.camlQuery('/', { listName: '', pageSize: 10 });
+    // query.setXML(
+    //     `
+    //     <Query>
+    //         <ViewFields>
+    //             <FieldRef Name='ID'/>
+    //             <FieldRef Name='Title' JSON='false'/>
+    //         </ViewFields>
+    //         <OrderBy>
+    //             <FieldRef Name="Title" Ascending='true' />
+    //         </OrderBy>
+    //     </Query>
+    // `);
 
-	$scope.downloadFile = ()=>{
+    $scope.startPager = async() => {
 
-	};
-	
+        let { items, pageInformation } = await query.GetListItems(0);
+        let { total, pages } = await query.getPaginationCount();
+
+        angular.extend($scope.pageState, {
+            totalCount: total,
+            pageInformation,
+            data: items,
+            pages
+        });
+
+        $scope.$apply();
+
+    }
+
+    $scope.goTo = async(pos) => {
+        let { items, pageInformation } = await query.GetListItems(pos);
+
+        if (items.length !== 0) {
+            angular.extend($scope.pageState, {
+                pageInformation,
+                data: items
+            });
+
+            $scope.$apply();
+        }
+
+
+    }
+
+    $scope.next = async() => {
+
+        try {
+            let { items, pageInformation } = await query.next();
+
+            angular.extend($scope.pageState, {
+                pageInformation,
+                data: items
+            });
+
+            $scope.$apply();
+
+        } catch (err) {
+
+        }
+
+    }
+
+    $scope.back = async() => {
+
+        try {
+            let { items, pageInformation } = await query.back();
+
+
+            angular.extend($scope.pageState, {
+                pageInformation,
+                data: items
+            });
+
+            $scope.$apply();
+        } catch (err) {
+
+        }
+
+
+    }
+
+    $scope.uploadFiles = (file, invalid) => {
+
+    };
+
+    $scope.downloadFile = () => {
+
+    };
+
+    $scope.start();
+
 };
