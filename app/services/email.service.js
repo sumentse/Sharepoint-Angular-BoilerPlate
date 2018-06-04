@@ -48,6 +48,8 @@ module.exports = ()=>{
 
                 },
                 /**
+                 * Use for sending email on Sharepoint
+                 * 
                  * @param  {String} url Sharepoint domain url
                  * @param  {Array} to Email addresses to send to
                  * @param  {String} from Original sender.
