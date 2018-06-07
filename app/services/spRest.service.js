@@ -1555,7 +1555,7 @@ module.exports = () => {
                  *
                  * @example
                  * //get the permission level of current user
-                 * spService.getPermissionLevels('site/pub/forms', '').then((response)=>console.log(response.data.d),(error)=>{});
+                 * spService.getPermissionLevels('site/pub/forms', `?$filter=LoginName eq 'Forms Coordinators' or LoginName eq 'Forms Members'`).then((response)=>console.log(response.data.d),(error)=>{});
                  */
                 getPermissionLevels: (url, query = '') => {
                     let deferred = $q.defer();

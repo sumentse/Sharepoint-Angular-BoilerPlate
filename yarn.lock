@@ -57,6 +57,10 @@ angular-animate@^1.6.10:
   version "1.6.10"
   resolved "https://registry.yarnpkg.com/angular-animate/-/angular-animate-1.6.10.tgz#c520f6d341370e34e0a62060c99bcf47b7d7db8c"
 
+angular-async-await@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/angular-async-await/-/angular-async-await-1.1.2.tgz#e493da869c791ecb2a48fd27a5f4ec6366003cdf"
+
 angular-filter@^0.5.8:
   version "0.5.15"
   resolved "https://registry.yarnpkg.com/angular-filter/-/angular-filter-0.5.15.tgz#73e09eddab1a65754d0f9c786a43111deccd0984"

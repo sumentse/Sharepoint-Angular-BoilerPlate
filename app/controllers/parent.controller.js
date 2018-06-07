@@ -1,5 +1,5 @@
 // @ngInject
-module.exports = ($scope, spService, email, _) => {
+module.exports = ($scope, spService, email, _, $async) => {
     $scope.message = `Works`;
 
     $scope.pageState = {

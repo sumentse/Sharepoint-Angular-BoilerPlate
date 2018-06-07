@@ -4,7 +4,10 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
 
 ((window, angular, undefined) => {
     // @ngInject
-    angular.module("app.services", [])
+
+	require('angular-async-await');
+
+    angular.module("app.services", ['angular-async-await'])
         .provider("spService", require("./spRest.service"))
         .provider("spFolder", require("./spFolder.service"))
         .provider("email", require("./email.service"))
