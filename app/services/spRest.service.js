@@ -1625,6 +1625,8 @@ module.exports = () => {
                  *             }
                  *         );
                  *     
+                 *     } catch(err){
+                 *     
                  *     }
                  * }
                  *
@@ -1708,6 +1710,8 @@ module.exports = () => {
                  *             }
                  *         );
                  *
+                 *     
+                 *     } catch(err){
                  *     
                  *     }
                  * }
