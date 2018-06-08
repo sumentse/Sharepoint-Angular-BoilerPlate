@@ -1698,7 +1698,7 @@ module.exports = () => {
                  *
                  *     try {
                  *         //add an list item with an attachment or no attachment
-                 *         await spService.addListItem(subdomain, listName, documentWithAttachments,
+                 *         await spService.addListItems(subdomain, listName, documentWithAttachments,
                  *             (response, index) => {
                  *                 console.log(response, index);
                  *             },

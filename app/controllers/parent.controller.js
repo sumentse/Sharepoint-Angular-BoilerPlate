@@ -99,6 +99,5 @@ module.exports = ($scope, spService, email, _, $async) => {
 
     };
 
-    $scope.start();
 
 };
