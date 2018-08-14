@@ -1,0 +1,34 @@
+.st-sort-ascent:before {
+    content: '\25B2';
+}
+
+.st-sort-descent:before {
+    content: '\25BC';
+}
+
+.table {
+    .select-page {
+        width: 50px;
+        text-align: center;
+    }
+    th {
+        background: $white;
+        tr>th {
+            border-bottom: 0px;
+        }
+    }
+    .pagination {
+        margin-bottom: 10px;
+        a {
+            cursor: pointer;
+        }
+        li a input {
+            padding: 0;
+            margin: -5px 0;
+        }
+    }
+}
+
+#column-names th {
+    vertical-align: middle;
+}

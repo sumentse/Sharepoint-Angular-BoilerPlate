@@ -1610,8 +1610,8 @@ module.exports = () => {
                  *             (error) => {
                  *                 console.log(error)
                  *             },
-                 *             (fileResponse, index)=>{
-                 *                 console.log(fileResponse, index);
+                 *             (documentID, fileResponse, index)=>{
+                 *                 console.log(documentID, fileResponse, index);
                  *             }
                  *         );
                  *
@@ -1624,8 +1624,6 @@ module.exports = () => {
                  *                 console.log(error)
                  *             }
                  *         );
-                 *     
-                 *     } catch(err){
                  *     
                  *     }
                  * }
@@ -1705,8 +1703,8 @@ module.exports = () => {
                  *             (error, index) => {
                  *                 console.log(error, index);
                  *             },
-                 *             (fileResponse, index)=>{
-                 *                 console.log(fileResponse, index);
+                 *             (documentID, fileResponse, index)=>{
+                 *                 console.log(documentID, fileResponse, index);
                  *             }
                  *         );
                  *

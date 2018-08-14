@@ -11,12 +11,13 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
     		require("./custom.directive"),
 			require("angular-ui-router"),
             require("ng-file-upload"),
-            // 'yaru22.angular-timeago',
-            // require("angular-smart-table"),
-            // require("angular-touch"),
-            // require("angular-sanitize"),
-			// require("angular-animate"),
-			// require("./stTableCustom"),
-			// require("angular-ui-bootstrap")
+            require("checklist-model"),
+            'yaru22.angular-timeago',
+            require("angular-smart-table"),
+            require("angular-touch"),
+            require("angular-sanitize"),
+			require("angular-animate"),
+			require("./stTableCustom"),
+			require("angular-ui-bootstrap")
     	])
 })(window, window.angular);

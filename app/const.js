@@ -1,5 +1,5 @@
 module.exports = {
-	list: {},
+	lists: {},
 	modalTemplate: {},
 	rootFolder: '/sites/pub/ha',
 	htmlMode: false
