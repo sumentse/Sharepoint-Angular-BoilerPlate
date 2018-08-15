@@ -30,13 +30,30 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                         scope.inputPage = c;
                     });
 
-                    scope.$on('currentPage', (event, args)=>{
+                    scope.$on('currentPage', (event, args) => {
 
-                        if(scope.currentPage < scope.numPages){
+                        if (scope.currentPage < scope.numPages) {
                             scope.selectPage(scope.pages[scope.pages.length - 1]);
                         }
-                        
+
                     });
+                }
+            }
+        })
+        .directive('customEvent', () => {
+            return {
+                require: 'stTable',
+                restrict: 'A',
+                link: (scope, elem, attr, table) => {
+                    let tableState = table.tableState();
+
+                    scope.$on('refreshTable', () => {
+
+                        table.pipe(tableState);
+
+
+                    });
+
                 }
             }
         })
