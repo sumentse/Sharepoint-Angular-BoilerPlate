@@ -810,13 +810,14 @@ module.exports = () => {
                  * @param {String} listname        The list name of where the file should be attached at
                  * @param {Number} id              the item ID of a Sharepoint list item
                  * @param {Array<Object>} AttachmentFiles A FileList
+                 * @param {Array<Object>} AttachmentFiles.files The file list
                  * @param {String=} AttachmentFiles.prefix Adding a prefix with each file upload
                  * @param {responseWithIndex} status          Server response and a count of files that are uploaded
                  * @return {(Promise<Boolean>|Promise<response>)} If successful will return a Boolean of true otherwise a server response with the index of the fail file upload
                  * @example
                  * //this will attach multiple files on the list 'Example' from '/sites/pub/forms' that has a list item with an ID of 1
                  * let startUploading = async()=> {
-                 *     let isDone = await spService.addListFileAttachments('/sites/pub/forms', 'Example', 1, FileListArr, (response, index)=>{
+                 *     let isDone = await spService.addListFileAttachments('/sites/pub/forms', 'Example', 1, {files:FileList}, (response, index)=>{
                  *         console.log(response, index);
                  *     });
                  *
@@ -841,7 +842,7 @@ module.exports = () => {
 
                                 //you can only add or delete the list item but it will be different in documents
                                 $http({
-                                    url: `${url}/_api/web/lists/GetByTitle('${listname}')/items(${id})/AttachmentFiles/add(FileName='${AttachmentFiles.prefix}${cleanStrFileName}')`,
+                                    url: `${url}/_api/web/lists/GetByTitle('${listname}')/items(${id})/AttachmentFiles/add(FileName='${AttachmentFiles.prefix ? AttachmentFiles.prefix : ''}${cleanStrFileName}')`,
                                     method: "POST",
                                     data: await this.getFileBuffer(AttachmentFiles.files[i]),
                                     processData: false,
