@@ -1,6 +1,8 @@
 'use strict';
 
 require("babel-polyfill");
+window.moment = require('moment');
+// window.exporter = require('export-to-csv');
 let angular = require("angular");
 
 angular.module('app', [

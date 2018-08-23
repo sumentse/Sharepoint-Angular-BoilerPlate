@@ -23,7 +23,7 @@ module.exports = ($scope, spService, email, _, $async) => {
     //     </Query>
     // `);
 
-    $scope.startPager = async() => {
+    $scope.startPager = $async(async() => {
 
         let { items, pageInformation } = await query.GetListItems(0);
         let { total, pages } = await query.getPaginationCount();
@@ -35,11 +35,9 @@ module.exports = ($scope, spService, email, _, $async) => {
             pages
         });
 
-        $scope.$apply();
+    });
 
-    }
-
-    $scope.goTo = async(pos) => {
+    $scope.goTo = $async(async(pos) => {
         let { items, pageInformation } = await query.GetListItems(pos);
 
         if (items.length !== 0) {
@@ -48,13 +46,12 @@ module.exports = ($scope, spService, email, _, $async) => {
                 data: items
             });
 
-            $scope.$apply();
         }
 
 
-    }
+    });
 
-    $scope.next = async() => {
+    $scope.next = $async(async() => {
 
         try {
             let { items, pageInformation } = await query.next();
@@ -70,9 +67,9 @@ module.exports = ($scope, spService, email, _, $async) => {
 
         }
 
-    }
+    });
 
-    $scope.back = async() => {
+    $scope.back = $async( async() => {
 
         try {
             let { items, pageInformation } = await query.back();
@@ -88,8 +85,7 @@ module.exports = ($scope, spService, email, _, $async) => {
 
         }
 
-
-    }
+    });
 
     $scope.uploadFiles = (file, invalid) => {
 

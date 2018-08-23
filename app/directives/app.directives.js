@@ -6,6 +6,7 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
     // @ngInject
 
     require("angular-timeago");
+     // require("../../node_modules/angular-bootstrap-toggle/dist/angular-bootstrap-toggle.min.js");
 
     angular.module("app.directives", [
     		require("./custom.directive"),

@@ -61,6 +61,10 @@ angular-async-await@^1.1.2:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/angular-async-await/-/angular-async-await-1.1.2.tgz#e493da869c791ecb2a48fd27a5f4ec6366003cdf"
 
+angular-bootstrap-toggle@^0.1.2:
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/angular-bootstrap-toggle/-/angular-bootstrap-toggle-0.1.2.tgz#93767f3056d5330ab6c6ced3ac4e645b741a4d6b"
+
 angular-filter@^0.5.8:
   version "0.5.15"
   resolved "https://registry.yarnpkg.com/angular-filter/-/angular-filter-0.5.15.tgz#73e09eddab1a65754d0f9c786a43111deccd0984"
@@ -1557,6 +1561,10 @@ expand-tilde@^1.2.1, expand-tilde@^1.2.2:
   resolved "https://registry.yarnpkg.com/expand-tilde/-/expand-tilde-1.2.2.tgz#0b81eba897e5a3d31d1c3d102f8f01441e559449"
   dependencies:
     os-homedir "^1.0.1"
+
+export-to-csv@^0.1.2:
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/export-to-csv/-/export-to-csv-0.1.2.tgz#6579c18e7cd8e0ed2412496093123d0335bc9833"
 
 exposify@~0.4.3:
   version "0.4.3"

@@ -1,6 +1,6 @@
 {
   "name": "angular_boilerplate",
-  "version": "5.0.0",
+  "version": "6.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -14,11 +14,18 @@
         "babelify",
         {
           "presets": [
-            "es2015"
+            [
+              "env",
+              {
+                "targets": {
+                  "browsers": [
+                    "ie >= 10"
+                  ]
+                }
+              }
+            ]
           ],
           "plugins": [
-            "transform-regenerator",
-            "transform-async-to-generator",
             "transform-object-rest-spread"
           ]
         }
@@ -29,6 +36,7 @@
     "angular": "^1.6.10",
     "angular-animate": "^1.6.10",
     "angular-async-await": "^1.1.2",
+    "angular-bootstrap-toggle": "^0.1.2",
     "angular-filter": "^0.5.8",
     "angular-sanitize": "^1.6.10",
     "angular-smart-table": "^2.1.8",
@@ -40,6 +48,7 @@
     "bootstrap-sass": "^3.3.7",
     "checklist-model": "^1.0.0",
     "crypto-js": "^3.1.9-1",
+    "export-to-csv": "^0.1.2",
     "jquery": "^3.1.1",
     "lodash": "^4.17.10",
     "moment": "^2.22.1",
