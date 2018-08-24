@@ -3,6 +3,6 @@ module.exports = {
 	LISTS: {},
 	FOLDERS: {},
 	modalTemplate: {},
-	rootFolder: '/sites/pub/ha',
+	rootFolder: '/sites/pub/ha', //this is always needed for digest
 	htmlMode: false
 };

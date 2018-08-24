@@ -72,7 +72,7 @@ module.exports = ()=>{
                         return;
                     }
 
-                    var mail = {
+                    const mail = {
                         properties: {
                             __metadata: { "type": "SP.Utilities.EmailProperties" },
                             From: (from) ? from : "",

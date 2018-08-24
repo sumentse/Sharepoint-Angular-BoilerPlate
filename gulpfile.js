@@ -4,6 +4,8 @@ var browserify = require('browserify'),
     gulp = require('gulp'),
     sass = require('gulp-sass'),
     clean = require('gulp-clean'),
+    spsave = require('gulp-spsave'),
+    cached = require('gulp-cached'),
     source = require('vinyl-source-stream'),
     autoprefixer = require('gulp-autoprefixer'),
     rename = require('gulp-rename'),
@@ -12,6 +14,27 @@ var browserify = require('browserify'),
     buffer = require('vinyl-buffer'),
     notify = require('gulp-notify'),
     ngAnnotate = require('gulp-ng-annotate');
+
+var coreOptions = {
+    siteUrl: '',
+    notification: false,
+    // path to document library or in this case the master pages gallery
+    folder: "", 
+    flatten: false
+
+};
+var creds = {
+    username: '',
+    password: ''
+};
+
+gulp.task('spsave', function() {
+    // runs the spsave gulp command on only files the have 
+    // changed in the cached files
+    return gulp.src('./public/**')
+        .pipe(cached('spFiles'))
+        .pipe(spsave(coreOptions, creds));     
+});
 
 gulp.task('clean', function(){
     return gulp.src('./public/js/')
@@ -66,8 +89,12 @@ gulp.task('production', function(){
         .pipe(gulp.dest('./public/js/'));
 });
 
+gulp.task('spmode', function(){
+    gulp.watch(['./app/**/*', 'sass/*.scss'], gulp.series('script', 'styles', 'spsave'));
+});
+
 gulp.task('script:watchAll', function(){
-    gulp.watch(['./app/**/*'], ['script']);
+    gulp.watch(['./app/**/*'], gulp.series('script'));
 });
 
 gulp.task('script:watch', function () {
@@ -88,5 +115,5 @@ gulp.task('styles', function () {
 });
 
 gulp.task('styles:watch', function () {
-    gulp.watch('./sass/**/*', ['styles']);
+    gulp.watch('./sass/**/*', gulp.series('styles'));
 });
