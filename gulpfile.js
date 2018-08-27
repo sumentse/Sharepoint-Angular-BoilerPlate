@@ -13,16 +13,18 @@ var browserify = require('browserify'),
     uglify = require('gulp-uglify'),
     buffer = require('vinyl-buffer'),
     notify = require('gulp-notify'),
+    CryptoJS = require("crypto-js"),
     ngAnnotate = require('gulp-ng-annotate');
 
 var coreOptions = {
     siteUrl: '',
     notification: false,
     // path to document library or in this case the master pages gallery
-    folder: "", 
+    folder: '', 
     flatten: false
 
 };
+
 var creds = {
     username: '',
     password: ''
@@ -89,8 +91,8 @@ gulp.task('production', function(){
         .pipe(gulp.dest('./public/js/'));
 });
 
-gulp.task('spmode', function(){
-    gulp.watch(['./app/**/*', 'sass/*.scss'], gulp.series('script', 'styles', 'spsave'));
+gulp.task('public:watch', function(){
+    gulp.watch(['./public/**/*'], gulp.series('spsave'));
 });
 
 gulp.task('script:watchAll', function(){
