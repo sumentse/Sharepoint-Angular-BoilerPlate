@@ -1273,7 +1273,7 @@ module.exports = () => {
                                 if (goToPage) {
 
                                     camlQuery.set_listItemCollectionPosition(null);
-                                    camlQuery.set_viewXml(`<View>${query}<RowLimit>${pageSize * goToPage}</RowLimit></View>`);
+                                    camlQuery.set_viewXml(`<View>${query.replace(/(\<View\>|\<\/View\>)/gi,'')}<RowLimit>${pageSize * goToPage}</RowLimit></View>`);
                                     spItems = list.getItems(camlQuery);
 
                                     context.load(spItems);
@@ -1315,7 +1315,7 @@ module.exports = () => {
 
                                 } else {
                                     pageIndex === 1 ? camlQuery.set_listItemCollectionPosition(null) : camlQuery.set_listItemCollectionPosition(position);
-                                    camlQuery.set_viewXml(`<View>${query}<RowLimit>${pageSize}</RowLimit></View>`);
+                                    camlQuery.set_viewXml(`<View>${query.replace(/(\<View\>|\<\/View\>)/gi,'')}<RowLimit>${pageSize}</RowLimit></View>`);
                                     spItems = list.getItems(camlQuery);
 
                                     context.load(spItems);
