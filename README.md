@@ -1,5 +1,5 @@
-# Angular-Boilerplate
-This is Boilerplate code for interacting with the Sharepoint API. 
+# Sharepoint Angular Boilerplate
+This is a basic boilerplate for using AngularJS with Sharepoint. It interacts with the Sharepoint API making it easier for developing applications.
 
 ## Getting Started
 
@@ -27,10 +27,10 @@ Navigate to the folder then type in
 This will compile the code for javascript and css automatally when file changes are detected.
 ## Production
 `yarn run production`
+## Automated Sharepoint File Uploading
+`yarn run spmode`
+You will need to supply your username, password, and the path of the folder on where you want the public files to be uploaded.
 
-Then you will run
-`live-server public`
-This will open up a browser so you see the changes live on your screen without loading the webpage
 
 ## Built With
 
