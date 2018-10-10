@@ -18,17 +18,28 @@ yarn (optional)
 ## Installing
 
 #### Node:
-`npm install`
+```
+npm install
+```
 #### Yarn:
-`yarn install`
+```
+yarn install
+```
 ## Compiling
 Navigate to the folder then type in 
-`yarn run dev` 
+```
+yarn run dev
+``` 
 This will compile the code for javascript and css automatally when file changes are detected.
 ## Production
-`yarn run production`
+```
+yarn run production
+```
 ## Automated Sharepoint File Uploading
-`yarn run spmode`
+```
+yarn run spmode
+```
+
 You will need to supply your username, password, and the path of the folder on where you want the public files to be uploaded.
 
 
