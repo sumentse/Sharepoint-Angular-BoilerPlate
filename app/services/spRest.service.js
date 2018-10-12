@@ -22,7 +22,7 @@ module.exports = () => {
                  * @return {String}           Correct formatting
                  */
                 encodeString: (theString) => {
-                    return encodeURIComponent(theString).replace(/[']/g, function (c)=>{
+                    return encodeURIComponent(theString).replace(/[']/g, (c)=>{
                         return '%' + c.charCodeAt(0).toString(16) + '%' + c.charCodeAt(0).toString(16);
                     })
                 },
