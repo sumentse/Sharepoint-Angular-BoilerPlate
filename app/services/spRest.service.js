@@ -16,8 +16,15 @@ module.exports = () => {
         },
         $get: /*@ngInject*/ ($http, $q, _, naturalSort) => {
             return {
+                /**
+                 * Encode string to make it readable on Sharepoint filter
+                 * @param  {String} theString String to encode
+                 * @return {String}           Correct formatting
+                 */
                 encodeString: (theString) => {
-                    return encodeURIComponent(theString).replace(/'/g, "''");
+                    return encodeURIComponent(theString).replace(/[']/g, function (c)=>{
+                        return '%' + c.charCodeAt(0).toString(16) + '%' + c.charCodeAt(0).toString(16);
+                    })
                 },
                 /**
                  * Get the digest value
