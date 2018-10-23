@@ -196,6 +196,44 @@ module.exports = () => {
 
                     return deferred.promise;
                 },
+                /**
+                 * 
+                 * @param {String} url 
+                 * @param {String} folderpath   Where the file should be written 
+                 * @param {Object} content      Content Object 
+                 * @param {String} content.name     Name of the text file
+                 * @param {String} content.overwrite    Should the file be overwrite
+                 * @param {String} content.data     Content of the file
+                 * @return {Promise<Boolean>}        Return true when file is completed
+                 *
+                 * 
+                 */                
+                writeTextFile: async function(url, folderpath = '', content = {} ) {
+                    let deferred = $q.defer();
+
+                    $http({
+                        url: `${url}/_api/web/GetFolderByServerRelativeUrl('${encodeURIComponent(folderpath)}')/Files/add(url='${content.name}',overwrite=${content.overwrite})`,
+                        method: "POST",
+                        data: content.data,
+                        processData: false,
+                        transformRequest: (data) => {
+                            return data;
+                        },
+                        headers: {
+                            "Accept": "application/json; odata=verbose",
+                            "X-RequestDigest": await this.getDigestValue()
+                        }
+                    }).then(
+                        (response) => {
+                            deferred.resolve(true);
+                        },
+                        (error) => {
+                            deferred.reject(error);
+                        }
+                    );
+
+                    return deferred.promise;                    
+                },                
                 addFile: async function(url, folderpath = '', file) {
                     let deferred = $q.defer();
 
