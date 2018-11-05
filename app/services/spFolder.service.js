@@ -233,7 +233,105 @@ module.exports = () => {
                     );
 
                     return deferred.promise;                    
-                },                
+                },
+                CustomFile: function(url, folderPath, fileName) {
+
+                    return {
+                        getDigestValue: async function(){
+                        
+                            const response = await $http({
+                                url: `${url}/_api/contextinfo`,
+                                async: true,
+                                method: "POST",
+                                headers: {
+                                    "accept": "application/json;odata=verbose",
+                                    "contentType": "text/xml"
+                                }
+                            });
+
+                            return response.data.d.GetContextWebInformation.FormDigestValue;
+                        },
+                        write: async function(content='', overwrite=false){
+                            let deferred = $q.defer();
+
+                            $http({
+                                url: `${url}/_api/web/GetFolderByServerRelativeUrl('${encodeURIComponent(folderPath)}')/Files/add(url='${fileName}',overwrite=${overwrite})`,
+                                method: "POST",
+                                data: content,
+                                processData: false,
+                                transformRequest: (data) => {
+                                    return data;
+                                },
+                                headers: {
+                                    "Accept": "application/json; odata=verbose",
+                                    "X-RequestDigest": await this.getDigestValue()
+                                }
+                            }).then(
+                                (response) => {
+                                    deferred.resolve(true);
+                                },
+                                (error) => {
+                                    deferred.reject(error);
+                                }
+                            );
+        
+                            return deferred.promise;   
+                        },
+                        read: function(){
+                            let deferred = $q.defer();
+
+                            $http.get(`${folderPath}${fileName}`).then(
+                                (response) => {
+                                    deferred.resolve(response.data);
+                                },
+                                (error) => {
+                                    deferred.reject(error);
+                                }
+                            );
+        
+                            return deferred.promise;
+                        },
+                        update: async function(content=''){
+                            let deferred = $q.defer();
+
+                            $http({
+                                url: `${url}/_api/web/GetFileByServerRelativeUrl('${encodeURIComponent(`${folderPath}${fileName}`)}')/$value`,
+                                method: "POST",
+                                data: content,
+                                processData: false,
+                                transformRequest: (data) => {
+                                    return data;
+                                },
+                                headers: {
+                                    "Accept": "application/json; odata=verbose",
+                                    "X-HTTP-Method": "PUT",
+                                    "X-RequestDigest": await this.getDigestValue()
+                                }
+                            }).then(
+                                (response) => {
+                                    deferred.resolve(true);
+                                },
+                                (error) => {
+                                    deferred.reject(error);
+                                }
+                            );
+        
+                            return deferred.promise;   
+                        },
+                        append: async function(content=''){
+                            try {
+                                //need to use this because the content could be different
+                                let currentContent = await this.read(`${folderPath}${fileName}`);
+                                await this.update(`${currentContent}\n${content}`);
+                                return true;
+
+                            } catch(err){
+                                return false;
+                            }
+
+                        }
+                    }
+                },                             
                 addFile: async function(url, folderpath = '', file) {
                     let deferred = $q.defer();
 
