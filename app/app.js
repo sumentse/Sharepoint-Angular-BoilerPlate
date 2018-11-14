@@ -2,6 +2,7 @@
 
 require("babel-polyfill");
 window.moment = require('moment');
+window.introJs = require('intro.js');
 // window.exporter = require('export-to-csv');
 let angular = require("angular");
 

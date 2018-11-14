@@ -1,23 +1,30 @@
 // @ngInject
 module.exports = ($stateProvider, $urlRouterProvider, $locationProvider, CONST) => {
 
-    $urlRouterProvider.otherwise("/");
-    const viewPath = "views/";
+    $urlRouterProvider.otherwise('/');
+    $urlRouterProvider.when('/administration');
+    const viewPath = 'views/';
 
+    //use this for single pages
     $stateProvider
-        .state("", {
-            url: "/",
-            controller: "",
-            templateUrl: ""
+        .state('', {
+            url: '/',
+            controller: 'parent.controller',
+            templateUrl: ''
         })
+        .state('error', {
+            url: '/404',
+            template: `404 - Error`
+        });
 
+    //Use this if there will be multiple views in a page
     $stateProvider
-        .state("", {
-            url: "/",
+        .state('', {
+            url: '/',
             views: {
-                "": {
-                    templateUrl: "",
-                    controller: ""
+                '': {
+                    controller: 'parent.controller',
+                    templateUrl: ''
                 }
 
             }

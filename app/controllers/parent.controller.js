@@ -95,5 +95,11 @@ module.exports = ($scope, spService, email, _, $async) => {
 
     };
 
+    $scope.init = $async(async()=>{
+        console.log('starting init');
+    });
+
+    $scope.init();
+
 
 };

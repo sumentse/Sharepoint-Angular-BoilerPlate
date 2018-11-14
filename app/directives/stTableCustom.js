@@ -24,8 +24,19 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
             //this directive controls the pagination on tables
             return {
                 restrict: 'E',
+                require: '^stTable',
                 template: '<input type="text" class="select-page" ng-model="inputPage" ng-change="selectPage(inputPage)" ng-model-options="{ debounce: 500 }">',
                 link: (scope, element, attrs) => {
+
+                    //watch if the input page is greater than total page
+                    scope.$watch('numPages', (n,o)=>{
+                        if(angular.isDefined(scope.inputPage) && angular.isDefined(n)) {
+                            if(scope.inputPage > n) {
+                                scope.inputPage = 1;
+                                scope.selectPage(scope.inputPage);
+                            }
+                        }
+                    });
 
                     scope.$watch('inputPage', (n, o)=>{
                         //prevents the input to go over the max pagination

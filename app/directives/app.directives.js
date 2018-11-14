@@ -6,6 +6,7 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
     // @ngInject
 
     require("angular-timeago");
+    require('./ng-datalist');
      // require("../../node_modules/angular-bootstrap-toggle/dist/angular-bootstrap-toggle.min.js");
 
     angular.module("app.directives", [
@@ -19,6 +20,8 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
             require("angular-sanitize"),
 			require("angular-animate"),
 			require("./stTableCustom"),
-			require("angular-ui-bootstrap")
+			require("angular-ui-bootstrap"),
+            // 'ui.toggle',
+            'ng-datalist'
     	])
 })(window, window.angular);
