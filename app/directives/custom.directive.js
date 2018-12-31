@@ -116,11 +116,11 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                                 <span class="btn btn-primary" ng-click="add(userInput)" style="padding-bottom:7px">Add</span>
                             </div>
                         </div>
-                        <div class="scroll-container" ng-style="{'height': uiState.scrollHeight + 'px'}">
-                            <p id="no-items" ng-show="items.length === 0">No items added</p>
-                            <div class="animate-row listbox-items" ng-repeat="item in items | limitTo: uiState.maxSize track by $index">
-                                <div ng-bind="item"></div>
-                                <i class="fas fa-minus-circle text-danger clickable" ng-click="remove(item)"></i>
+                        <div class="scroll-container" ng-style="scrollContainerStyle">
+                            <p ng-style="noItemStyle" ng-show="items.length === 0">No items added</p>
+                            <div class="animate-row listbox-items" ng-style="$last ? listBoxStyle.normal : listBoxStyle.lastchild" ng-repeat="item in items | limitTo: uiState.maxSize track by $index">
+                                <div ng-style="itemStyle" ng-bind="item"></div>
+                                <i class="fas fa-minus-circle text-danger clickable" ng-style="iconStyle" ng-click="remove(item)"></i>
                             </div>
                         </div>
                     </div>
@@ -130,13 +130,63 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                 },
                 link: (scope, element, attrs) => {
 
+                    angular.extend(scope, {
+                        scrollContainerStyle: {
+                            'position': 'relative',
+                            'margin': '10px 0px 0px 0px',
+                            'border-radius': '4px',
+                            'background': '#FFF',
+                            'border': '1px solid #ccc',
+                            'overflow-y': 'scroll',
+                            'height': angular.isDefined(attrs.scrollHeight) ? attrs.scrollHeight + 'px' : '200px', 
+                            'background': 'white'
+                        },
+                        listBoxStyle: {
+                            normal: {
+                                'display': 'flex',
+                                'flex-direction': 'row',
+                                'flex-wrap': 'nowrap',
+                                'align-items': 'center',
+                                'justify-content': 'center',
+                                'padding': '5px 0px 5px 15px',
+                                'margin': '0px 10px'
+                            },
+                            lastchild: {
+                                'display': 'flex',
+                                'flex-direction': 'row',
+                                'flex-wrap': 'nowrap',
+                                'align-items': 'center',
+                                'justify-content': 'center',
+                                'padding': '5px 0px 5px 15px',
+                                'margin': '0px 10px',
+                                'border-bottom': 'solid #bbb 1px'
+                            }
+                        },
+                        itemStyle: {
+                            'width': '95%',
+                            'display': 'flex',
+                            'flex-wrap': 'wrap',
+                            'align-content': 'center',
+                            'word-break': 'break-all'
+                        },
+                        noItemStyle: {
+                            'margin': '15px'
+                        },
+                        iconStyle: {
+                            'display': 'flex',
+                            'align-items': 'center',
+                            'height': '100%',
+                            'font-size': '20px',
+                            'padding': '10px'                            
+                        }
+                    });
+
                     scope.setup = () => {
                         angular.extend(scope, {
                             items: scope.items.sort(),
                             userInput: '',
                             uiState: {
                                 maxSize: angular.isDefined(attrs.maxSize) ? parseInt(attrs.maxSize, 10) : 50,
-                                scrollHeight: angular.isDefined(attrs.scrollHeight) ? attrs.scrollHeight : 200,
                                 unique: angular.isDefined(attrs.unique) ? attrs.unique == 'true' : true,
                                 placeholder: angular.isDefined(attrs.placeholder) ? attrs.placeholder : '',
                             },
@@ -167,6 +217,6 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                     scope.setup();
                 }
             }
-        })        
+        })      
 
 })(window, window.angular);
