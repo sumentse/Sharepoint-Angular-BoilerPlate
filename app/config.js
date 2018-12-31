@@ -1,5 +1,5 @@
 // @ngInject
-module.exports = ($provide, compileProvider, emailProvider, spServiceProvider, spFolderProvider, CONST)=>{
+module.exports = ($provide, $compileProvider, emailProvider, spServiceProvider, spFolderProvider, CONST)=>{
 
     $compileProvider.aHrefSanitizationWhitelist(/^\s*(https?|s?ftp|mailto|tel|file|javascript):/);
 
