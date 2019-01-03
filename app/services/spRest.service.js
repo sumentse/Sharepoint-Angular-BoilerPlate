@@ -1,7 +1,6 @@
+import CryptoJS  from 'crypto-js';
 // @ngInject
 export default () => {
-
-    const CryptoJS = require("crypto-js");
 
     let defaultDomain = "/";
     let digestValue = angular.element(document.querySelector("#__REQUESTDIGEST")).val();

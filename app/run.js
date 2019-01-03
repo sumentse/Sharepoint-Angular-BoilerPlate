@@ -1,3 +1,4 @@
+import introJS from 'intro.js';
 // @ngInject
 export default ($rootScope) => {
 	//enable only with ui router
@@ -11,11 +12,11 @@ export default ($rootScope) => {
     // });
     
     $rootScope.stopGuide = () => {
-    	introJs().exit();
+    	introJS().exit();
     };
 
     $rootScope.stopGuide = () => {
-    	introJs().start();
+    	introJS().start();
     };
     
 };
