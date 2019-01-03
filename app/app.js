@@ -1,18 +1,24 @@
 'use strict';
-
-require("babel-polyfill");
-window.moment = require('moment');
+import 'babel-polyfill';
 window.introJs = require('intro.js');
 // window.exporter = require('export-to-csv');
-let angular = require("angular");
+import angular from 'angular';
+import './controllers';
+import './services';
+import './directives';
+import './filters';
+import startup from './run';
+import CONST from './const';
+import appConfiguration from './config';
+import routes from './routes';
 
 angular.module('app', [
-	require("./controllers/app.controllers"),
-	require("./services/app.services"),
-	require("./directives/app.directives"),
-	require("./filters/app.filters")
+	'app.controllers',
+	'app.services',
+	'app.directives',
+	'app.filters'
 ])
-.constant("CONST", require("./const"))
-.config(require("./config"))
-// .config(require("./routes/main-route"))
-.run(require("./run"));
+.constant('CONST', CONST)
+.config(appConfiguration)
+.config(routes)
+.run(startup);

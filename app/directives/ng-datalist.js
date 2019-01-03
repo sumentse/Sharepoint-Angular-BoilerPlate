@@ -228,4 +228,4 @@ function ngDatalist($document, $timeout) {
     }
 }
 
-module.exports = name;
+export default name;

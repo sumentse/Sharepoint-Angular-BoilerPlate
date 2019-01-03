@@ -1,4 +1,4 @@
-module.exports = {
+export default {
 	HOSTS: {},
 	LISTS: {},
 	FOLDERS: {},

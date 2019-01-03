@@ -1,19 +1,19 @@
 // @ngInject
-module.exports = ()=>{
+export default () => {
     let defaultDomain = "/";
     let digestValue = angular.element(document.querySelector("#__REQUESTDIGEST")).val();
     return {
-        urlDomain: (urlLink)=>{
-            if(angular.isDefined(urlLink)){
+        urlDomain: (urlLink) => {
+            if (angular.isDefined(urlLink)) {
                 defaultDomain = urlLink;
                 return this;
             } else {
                 return defaultDomain;
             }
         },
-        $get: /*@ngInject*/ ($http, $q)=>{
+        $get: /*@ngInject*/ ($http, $q) => {
             return {
-                getDigestValue: (complete = ()=>{}) => {
+                getDigestValue: (complete = () => {}) => {
 
                     let deferred = $q.defer();
 
@@ -59,7 +59,7 @@ module.exports = ()=>{
                  * @param  {Promise} failure Response from server when email did not send
                  * @return {Void}
                  */
-                send: async function(to, from, body, subject, complete = ()=>{}, failure = ()=>{}) {
+                send: async function (to, from, body, subject, complete = () => {}, failure = () => {}) {
 
                     try {
                         if (!to) {
@@ -74,9 +74,13 @@ module.exports = ()=>{
 
                     const mail = {
                         properties: {
-                            __metadata: { "type": "SP.Utilities.EmailProperties" },
+                            __metadata: {
+                                "type": "SP.Utilities.EmailProperties"
+                            },
                             From: (from) ? from : "",
-                            To: { "results": to },
+                            To: {
+                                "results": to
+                            },
                             Body: body,
                             Subject: subject
                         }
@@ -92,10 +96,10 @@ module.exports = ()=>{
                             "X-RequestDigest": await this.getDigestValue()
                         }
                     }).then(
-                        (response)=>{
+                        (response) => {
                             complete(response);
-                        }, 
-                        (err)=>{
+                        },
+                        (err) => {
                             failure(err);
                         }
                     );

@@ -1,5 +1,5 @@
 // @ngInject
-module.exports = () => {
+export default () => {
     let defaultDomain = "/";
     let digestValue = angular.element(document.querySelector("#__REQUESTDIGEST")).val();
     return {

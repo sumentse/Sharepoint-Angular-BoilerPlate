@@ -1,4 +1,4 @@
 // @ngInject
-module.exports = ($scope, spService, email) => {
+export default ($scope, spService, email) => {
 
 };

@@ -17,6 +17,7 @@
 				<h1>Boilerplate <span ng-bind="message"></span></h1>
 				 <button ngf-select="uploadFiles($files, $invalidFiles)" name="file">Upload File</button>
 				 <button ng-click="downloadFile()">Download File</button>
+				 <toggle ng-model="toggleValue" ng-change="changed()"></toggle>
 			</div>
 		</div>
 		<script src="js/bundle.min.js"></script>

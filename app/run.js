@@ -1,5 +1,5 @@
 // @ngInject
-module.exports = ($rootScope) => {
+export default ($rootScope) => {
 	//enable only with ui router
     // $rootScope.$on('$stateChangeSuccess', (event, toState, toParams, fromState, fromParams) => {
     //     if ($rootScope.currentBackgroundTheme) {

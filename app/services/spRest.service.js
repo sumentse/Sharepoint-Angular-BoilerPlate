@@ -1,5 +1,5 @@
 // @ngInject
-module.exports = () => {
+export default () => {
 
     const CryptoJS = require("crypto-js");
 
