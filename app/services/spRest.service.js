@@ -1,4 +1,5 @@
-import CryptoJS  from 'crypto-js';
+import CryptoJS from 'crypto-js';
+
 // @ngInject
 export default () => {
 
@@ -825,6 +826,8 @@ export default () => {
                  * let startUploading = async()=> {
                  *     let isDone = await spService.addListFileAttachments('/sites/pub/forms', 'Example', 1, {files:FileList}, (response, index)=>{
                  *         console.log(response, index);
+                 *     }, (progress)=>{
+                 *          console.log(progress);
                  *     });
                  *
                  *     if(isDone){
@@ -834,9 +837,13 @@ export default () => {
                  *
                  * startUploading();
                  */
-                addListFileAttachments: function(url, listname, id, AttachmentFiles, status) {
+                addListFileAttachments: function(url, listname, id, AttachmentFiles, success, progressEvent) {
 
                     let deferred = $q.defer();
+                    let progress = 0;
+                    let loaded = 0;
+                    const totalFiles = AttachmentFiles.files.length;
+                    const filePerPercentage = 100 / totalFiles;
 
                     try {
                         let addItem = async(i) => {
@@ -856,9 +863,22 @@ export default () => {
                                     headers: {
                                         "Accept": "application/json;odata=verbose",
                                         "X-RequestDigest": await this.getDigestValue()
+                                    },
+                                    uploadEventHandlers: {
+                                        progress: (e) => {
+                                                
+                                            progress = loaded + (e.loaded / e.total) * filePerPercentage;
+
+                                            if(e.loaded === e.total){
+                                                loaded = progress;
+                                            }
+                                            
+                                            progressEvent(Math.ceil(progress));
+
+                                        }
                                     }
                                 }).then((response) => {
-                                    status(response, i);
+                                    success(response, i);
                                     addItem(i + 1);
                                 }, (response) => {
 
@@ -891,7 +911,7 @@ export default () => {
                  * @param  {String} listname The listname of where the file is located
                  * @param  {Number} id       The Sharepoint list item ID
                  * @param  {Object} fileName A file object
-                 * @return {response}          Server response when successful/failure
+                 * @return {Promise}          Server response when successful/failure
                  *
                  * @example
                  * //This will delete the file attachment on a list item
@@ -1381,17 +1401,18 @@ export default () => {
                                 pageInformation = (((pageIndex - 1) * pageSize) + 1) + " - " + ((pageIndex * pageSize) - (pageSize - spItems.get_count()));
                             }
 
-                            let nodes = doc.querySelectorAll('OrderBy FieldRef');
-
+                            
                             //has an orderBy field
-                            if (nodes.length > 0) {
-                                let [childNode] = nodes;
-                                let sortColumn = childNode.getAttribute('Name');
-                                previousPagingInfo = `PagedPrev=TRUE&Paged=TRUE&p_ID=${items[0].ID}&p_${sortColumn}=${encodeURIComponent(items[0][sortColumn])}`;
-                            } else {
-                                previousPagingInfo = `PagedPrev=TRUE&Paged=TRUE&p_ID=${items[0].ID}`;
+                            if(nextPagingInfo){
+                                let nodes = doc.querySelectorAll('OrderBy FieldRef');
+                                if (nodes.length > 0) {
+                                    let [childNode] = nodes;
+                                    let sortColumn = childNode.getAttribute('Name');
+                                    previousPagingInfo = `PagedPrev=TRUE&Paged=TRUE&p_ID=${items[0].ID}&p_${sortColumn}=${encodeURIComponent(items[0][sortColumn])}`;
+                                } else {
+                                    previousPagingInfo = `PagedPrev=TRUE&Paged=TRUE&p_ID=${items[0].ID}`;
+                                }
                             }
-
 
 
                         }
@@ -1547,7 +1568,8 @@ export default () => {
                                     UserProfileProperties
                                 }
                             }
-                        }));
+                        }).data.d);
+
                     }, (response) => {
                         deferred.reject(response);
                     });
@@ -1574,7 +1596,7 @@ export default () => {
                             "Accept": "application/json; odata=verbose"
                         }
                     }).then((response) => {
-                        deferred.resolve(response);
+                        deferred.resolve(response.data.d.results);
                     }, (response) => {
                         deferred.reject(response);
                     });
@@ -1591,7 +1613,8 @@ export default () => {
                  * @param {Array<Object>} documents.AttachmentFiles Filelist attachments
                  * @param  {response} complete   Server response on successful add
                  * @param  {response} failure    Server response on error
-                 * @param  {fileStatusResponse}   fileStatus
+                 * @param  {fileStatusResponse}  fileStatus
+                 * @param  {uploadProgressCB}    The file upload progress
                  *
                  * @example
                  *
@@ -1619,6 +1642,9 @@ export default () => {
                  *             },
                  *             (documentID, fileResponse, index)=>{
                  *                 console.log(documentID, fileResponse, index);
+                 *             },
+                 *             (progressEvent)=>{
+                 *                 console.log(progresEvent);
                  *             }
                  *         );
                  *
@@ -1637,7 +1663,7 @@ export default () => {
                  *
                  * start();
                  */
-                addListItem: async function(url, listname, documents, complete = () => {}, failure = () => {}, fileStatus) {
+                addListItem: async function(url, listname, documents, complete = () => {}, failure = () => {}, fileStatus, uploadProgressCB) {
                     // Prepping our update
                     let item = angular.extend({
                         "__metadata": {
@@ -1666,6 +1692,9 @@ export default () => {
                                     },
                                     (status, index) => {
                                         fileStatus(response.data.d.ID, status, index);
+                                    },
+                                    (progressEvent)=>{
+                                        uploadProgressCB(progressEvent)
                                     });
 
                             }
@@ -1723,7 +1752,7 @@ export default () => {
                  *
                  * start();
                  */                
-                addListItems: function(url, listname, itemsToAdd, complete = () => {}, failure = () => {}, fileStatus) {
+                addListItems: function(url, listname, itemsToAdd, complete = () => {}, failure = () => {}, fileStatus, uploadProgressCB) {
 
 
                     if (!angular.isArray(itemsToAdd)) {
@@ -1774,6 +1803,9 @@ export default () => {
                                     complete(response, i);
                                     await this.addListFileAttachments(url, listname, response.data.d.ID, { files: AttachmentFiles, prefix: '' }, (status, index) => {
                                         fileStatus(response.data.d.ID, status, index);
+                                    },
+                                    (progressEvent) => {
+                                        uploadProgressCB(progressEvent);
                                     });
                                 }
 
@@ -1952,7 +1984,7 @@ export default () => {
 
                     $http({
                         url: `${url}/_api/web/lists/getbytitle('${listname}')/items(${id})`,
-                        method: "POST",
+                        method: "DELETE",
                         headers: {
                             "Accept": "application/json;odata=verbose",
                             "X-Http-Method": "DELETE",
@@ -2010,7 +2042,7 @@ export default () => {
                         if (itemsToDelete.length !== i) {
                             $http({
                                 url: `${url}/_api/web/lists/getbytitle('${listname}')/items(${itemsToDelete[i]})`,
-                                method: "POST",
+                                method: "DELETE",
                                 headers: {
                                     "Accept": "application/json;odata=verbose",
                                     "X-Http-Method": "DELETE",
