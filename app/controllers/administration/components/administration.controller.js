@@ -32,7 +32,9 @@ export default ($scope, $state, $filter, $async, $stateParams, spService, email,
         modal.confirmation($async(async (userAnswer) => {
     
           if (userAnswer === true) {
-    
+            event.target.disabled = true;
+            event.target.querySelector('.fas').className = 'fas fa-spinner fa-spin';
+
             await spService.deleteListItem(CONST.rootFolder, CONST.LISTS.form, id);
     
             $scope.$broadcast('refreshTable', {

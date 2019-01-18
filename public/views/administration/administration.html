@@ -46,7 +46,7 @@
                 <td ng-bind="row.status"></td>
                 <td>
                     <button class="btn btn-danger"
-                            ng-click="deleteItem(row.ID)"><span class="fas fa-trash"></span></button>
+                            ng-click="deleteItem($event, row.ID)"><span class="fas fa-trash"></span></button>
                 </td>
             </tr>
         </tbody>
