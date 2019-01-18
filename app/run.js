@@ -1,15 +1,26 @@
 import introJS from 'intro.js';
 // @ngInject
-export default ($rootScope) => {
-	//enable only with ui router
-    // $rootScope.$on('$stateChangeSuccess', (event, toState, toParams, fromState, fromParams) => {
-    //     if ($rootScope.currentBackgroundTheme) {
-    //         document.querySelector('body').classList.remove($rootScope.currentBackgroundTheme);
-    //     }
+export default ($rootScope, $transitions) => {
+    const webPageConfiguration = {
+        pageName: ''
+    };
 
-    //     $rootScope.currentBackgroundTheme = toState.data.backgroundTheme;
-    //     document.querySelector('body').classList.add($rootScope.currentBackgroundTheme);
-    // });
+    $transitions.onBefore({}, async(trans)=>{
+        const permissionedPages = [];
+        //permissioned pages
+        if( permissionedPages.includes(trans.to().name) ){
+            const permissions = await spService.getPermissionLevels(CONST.rootFolder, ``);
+            
+            if(permissions.length === 0){
+                await new Promise((resolve)=>{
+                    modal.displayWarning('You do not have access to this page.', ()=>resolve());
+                });
+                return trans.router.stateService.target('form');
+            }
+        }
+    });
+
+    angular.merge($rootScope, webPageConfiguration);
     
     $rootScope.stopGuide = () => {
     	introJS().exit();

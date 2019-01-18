@@ -1,5 +1,11 @@
 @import "https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.css";
 @import "https://use.fontawesome.com/releases/v5.0.12/css/all.css";
+@import 'https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css';
+@import 'core/custombootstrap';
+@import 'https://cdnjs.cloudflare.com/ajax/libs/hover.css/2.3.1/css/hover-min.css';
+@import './node_modules/intro.js/introjs';
+@import './node_modules/intro.js/themes/introjs-nassim';
+
 // @import "https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css";
 @import "core/msk_colors";
 
@@ -9,6 +15,14 @@
 
 #angular-container {
 	@import "core/globals";
+
+	#progress-bar-message {
+		>p {
+			left: 0;
+			right: 0;
+		}
+	}
+
 	// @import "./node_modules/bootstrap-sass/assets/stylesheets/bootstrap";
 	// @import "core/responsivemedia";
 	// @import "_partials/pagination.component";

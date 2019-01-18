@@ -47,8 +47,8 @@ You will need to supply your username, password, and the path of the folder on w
 
 * [AngularJS 1](https://angularjs.org/)
 * [SCSS](http://sass-lang.com/)
-* [Font Awesome](http://fontawesome.io/icons/)
+* [Font Awesome](http://fontawesome.com/)
 * [Bootstrap](http://getbootstrap.com/)
-* [JS ES6]
-* [UI Router](https://ui-router.github.io/ng1/)
+* [JS ES6/7]
+* [UI Router](https://github.com/angular-ui/ui-router)
 

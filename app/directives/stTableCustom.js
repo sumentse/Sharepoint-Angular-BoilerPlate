@@ -23,19 +23,19 @@ angular.module('stTableCustom', [])
             link: (scope, element, attrs) => {
 
                 //watch if the input page is greater than total page
-                scope.$watch('numPages', (n,o)=>{
-                    if(angular.isDefined(scope.inputPage) && angular.isDefined(n)) {
-                        if(scope.inputPage > n) {
+                scope.$watch('numPages', (n, o) => {
+                    if (angular.isDefined(scope.inputPage) && angular.isDefined(n)) {
+                        if (scope.inputPage > n) {
                             scope.inputPage = 1;
                             scope.selectPage(scope.inputPage);
                         }
                     }
                 });
 
-                scope.$watch('inputPage', (n, o)=>{
+                scope.$watch('inputPage', (n, o) => {
                     //prevents the input to go over the max pagination
-                    if(angular.isDefined(scope.numPages)){
-                        if(n > scope.numPages) {
+                    if (angular.isDefined(scope.numPages)) {
+                        if (n > scope.numPages) {
                             scope.inputPage = scope.numPages;
                             scope.selectPage(scope.inputPage);
                         } else if (n < 1) {
@@ -66,12 +66,48 @@ angular.module('stTableCustom', [])
             link: (scope, elem, attr, table) => {
                 let tableState = table.tableState();
 
-                scope.$on('refreshTable', () => {
+                scope.$on('refreshTable', (event, params) => {
 
-                    table.pipe(tableState);
+                    if (params) {
+
+                        table.pipe(angular.merge(tableState, {
+                            search: {
+                                predicateObject: params
+                            }
+                        }));
+
+                    } else {
+                        table.pipe(tableState);
+                    }
 
 
                 });
+
+                //handles refresh on IE browsers
+                scope.$on('ie_refreshTable', () => {
+
+                    let params = {};
+
+                    const formStatus = document.querySelector('[st-search="form_status"]');
+
+                    if (formStatus) {
+                        params.form_status = formStatus.value;
+                    }
+
+
+                    if (JSON.stringify(params) === '{}') {
+                        table.pipe(tableState);
+                    } else {
+
+                        table.pipe(angular.merge(tableState, {
+                            search: {
+                                predicateObject: params
+                            }
+                        }));
+
+                    }
+
+                })
 
             }
         }

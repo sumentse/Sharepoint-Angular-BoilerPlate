@@ -14,8 +14,6 @@ import './ng-datalist';
 import './custom.directive';
 import './stTableCustom';
 
-// import '../../node_modules/angular-bootstrap-toggle/dist/angular-bootstrap-toggle';
-
 angular.module('app.directives', [
     'custom.directive',
     'ngFileUpload',
@@ -27,7 +25,6 @@ angular.module('app.directives', [
     'ngSanitize',
     'ngAnimate',
     'stTableCustom',
-    // 'ui.toggle',
     'ui.bootstrap',
     'ng-datalist'
 ]);

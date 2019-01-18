@@ -213,5 +213,30 @@ angular.module('custom.directive', [])
             }
         }
     })
+    .directive('maxWords', ($filter) => {
+        return {
+            restrict: "A",
+            scope: {
+                model: '=ngModel'
+            },
+            link: (scope, element, attrs) => {
+
+                const userDefinedMaxWord = parseInt(attrs.maxWords, 10);
+
+                scope.$watch('model', (newValue,oldValue) => {
+
+                    const totalWordCount = $filter('wordCounter')(newValue);
+
+                    if(totalWordCount > userDefinedMaxWord){
+                        scope.model = oldValue;
+                    }
+                    
+                });
+
+                
+
+            }
+        }
+    })    
 
 export default 'custom.directive';

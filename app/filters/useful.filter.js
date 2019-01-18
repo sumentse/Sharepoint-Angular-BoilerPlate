@@ -9,6 +9,19 @@ angular.module("useful.filters", [])
             return (bytes / Math.pow(1024, Math.floor(number))).toFixed(precision) + ' ' + units[number];
         }
     })
+    .filter('wordCounter', () => {
+        return (words) => {
+            if(words && angular.isString(words)){
+
+                const totalWordLength = words.split(/\s+/).length;
+
+                return totalWordLength;
+
+            } else {
+                return 0;
+            }
+        };
+    })    
     .filter('regex', () => {
         return (input, field, regex) => {
             let patt = new RegExp(regex);
