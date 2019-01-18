@@ -29,6 +29,14 @@
     }
 }
 
-#column-names th {
-    vertical-align: middle;
+[st-pagination=''] {
+    position: fixed;
+    bottom: 0px;
+    background: #fff;
+    left: 0px;
+    width: 100%;
+    z-index: 5;
+    box-shadow: $msk_med_gray 0px -1px 5px;
+    padding: 1rem 0rem 1rem 0rem;
+    animation-duration: 1.3s;
 }

@@ -1,1 +1,66 @@
-<h1>Admin Page</h1>
+<div>
+    <h3 class="text-center my-3">Administration</h3>
+    <div class="d-flex justify-content-between">
+        <div></div>
+        <div><button class="btn btn-outline-primary">Example</button></div>
+    </div>
+    <table class="table my-3"
+           st-table="tableState.display"
+           st-pipe="customPipe"
+           custom-event>
+        <thead class="thead-light">
+            <tr id="column-names">
+                <th class="clickable align-top">Title</th>
+                <th class="clickable align-top">Status</th>
+                <th class="clickable align-top">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><span class="fas fa-search"></span></span>
+                        </div>
+                        <input class="form-control"
+                               st-search="Title"
+                               ng-model="filterState.searchTitle" />
+                    </div>
+                </td>
+                <td>
+                    <select class="form-control"
+                            ng-change="refreshTable()"
+                            st-search="status"
+                            ng-model="filterState.status">
+                        <option value=""
+                                ng-selected="selected">All</option>
+                        <option value="pending">Pending</option>
+                        <option value="complete">Complete</option>
+                    </select>
+                </td>
+                <td><button class="btn btn-danger"
+                            ng-click="clearFilters()">Clear Filters</button></td>
+            </tr>
+            <tr ng-repeat="row in tableState.display">
+                <td ng-bind="row.Title"></td>
+                <td ng-bind="row.status"></td>
+                <td>
+                    <button class="btn btn-danger"
+                            ng-click="deleteItem(row.ID)"><span class="fas fa-trash"></span></button>
+                </td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan={{tableState.colLength}}
+                    class="text-center">
+                    <div class="animated slideInUp"
+                         st-items-by-page="25"
+                         st-pagination=""
+                         st-template="views/components/pagination.html"></div>
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+    <br><br><br><br>
+</div>
