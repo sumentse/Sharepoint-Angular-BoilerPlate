@@ -1,7 +1,7 @@
 // @ngInject
 export default () => {
     let defaultDomain = "/";
-    let digestValue = angular.element(document.querySelector("#__REQUESTDIGEST")).val();
+    let digestValue = document.querySelector("#__REQUESTDIGEST").value;
     return {
         urlDomain: (urlLink) => {
             if (angular.isDefined(urlLink)) {
@@ -55,8 +55,8 @@ export default () => {
                  * @param  {String} from Original sender.
                  * @param  {String} body Message to send
                  * @param  {String} subject Email subject
-                 * @param  {Promise} complete Response from server when email is successful
-                 * @param  {Promise} failure Response from server when email did not send
+                 * @param  {Callback} complete Response from server when email is successful
+                 * @param  {Callback} failure Response from server when email did not send
                  * @return {Void}
                  */
                 send: async function (to, from, body, subject, complete = () => {}, failure = () => {}) {

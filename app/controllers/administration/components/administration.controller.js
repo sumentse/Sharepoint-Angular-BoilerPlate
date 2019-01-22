@@ -29,7 +29,7 @@ export default ($scope, $state, $filter, $async, $stateParams, spService, email,
       }    
 
     $scope.deleteItem = (id) => {
-        modal.confirmation($async(async (userAnswer) => {
+        modal.confirmation(async (userAnswer) => {
     
           if (userAnswer === true) {
     
@@ -42,7 +42,7 @@ export default ($scope, $state, $filter, $async, $stateParams, spService, email,
             
           }
     
-        }));
+        });
       };
 
       $scope.clearFilters = () => {

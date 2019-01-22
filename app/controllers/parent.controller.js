@@ -61,8 +61,6 @@ module.exports = ($scope, spService, email, _, $async) => {
                 data: items
             });
 
-            $scope.$apply();
-
         } catch (err) {
 
         }
@@ -80,7 +78,6 @@ module.exports = ($scope, spService, email, _, $async) => {
                 data: items
             });
 
-            $scope.$apply();
         } catch (err) {
 
         }

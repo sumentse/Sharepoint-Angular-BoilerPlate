@@ -4,7 +4,7 @@ import CryptoJS from 'crypto-js';
 export default () => {
 
     let defaultDomain = "/";
-    let digestValue = angular.element(document.querySelector("#__REQUESTDIGEST")).val();
+    let digestValue = document.querySelector("#__REQUESTDIGEST").value;
     return {
         urlDomain: (urlLink) => {
             if (angular.isDefined(urlLink)) {
@@ -1984,7 +1984,7 @@ export default () => {
 
                     $http({
                         url: `${url}/_api/web/lists/getbytitle('${listname}')/items(${id})`,
-                        method: "DELETE",
+                        method: "POST",
                         headers: {
                             "Accept": "application/json;odata=verbose",
                             "X-Http-Method": "DELETE",
@@ -2042,7 +2042,7 @@ export default () => {
                         if (itemsToDelete.length !== i) {
                             $http({
                                 url: `${url}/_api/web/lists/getbytitle('${listname}')/items(${itemsToDelete[i]})`,
-                                method: "DELETE",
+                                method: "POST",
                                 headers: {
                                     "Accept": "application/json;odata=verbose",
                                     "X-Http-Method": "DELETE",

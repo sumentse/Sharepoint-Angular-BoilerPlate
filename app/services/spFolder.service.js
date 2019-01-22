@@ -1,7 +1,7 @@
 // @ngInject
 export default () => {
     let defaultDomain = "/";
-    let digestValue = angular.element(document.querySelector("#__REQUESTDIGEST")).val();
+    let digestValue = document.querySelector("#__REQUESTDIGEST").value;
     return {
         urlDomain: (urlLink) => {
             if (angular.isDefined(urlLink)) {

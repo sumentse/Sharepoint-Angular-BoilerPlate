@@ -1,7 +1,5 @@
 'use strict';
 import 'babel-polyfill';
-
-// window.exporter = require('export-to-csv');
 import angular from 'angular';
 import './controllers';
 import './services';
@@ -20,5 +18,5 @@ angular.module('app', [
 ])
 .constant('CONST', CONST)
 .config(appConfiguration)
-.config(routes)
+.config(routes) //comment out to disable routing
 .run(startup);
