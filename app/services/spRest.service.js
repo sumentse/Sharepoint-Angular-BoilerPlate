@@ -1214,6 +1214,16 @@ export default () => {
 
                             });
                         },
+                        generateViewFields: function(items){
+                            return items.map((item)=>{
+                                const fields = item.split(':');
+                                if(fields.length === 2){
+                                    return `<FieldRef Name="${fields[0]}" JSON="true"></FieldRef>`;
+                                } else {
+                                    return `<FieldRef Name="${item}"></FieldRef>`;
+                                }
+                            }).join('');
+                        },
                         getPageInforation: function() {
                             return pageInformation;
                         },
@@ -1290,10 +1300,14 @@ export default () => {
                             //Set the next or back list items collection position 
                             //First time the position will be null 
                             let self = this;
+                            const nodes = doc.querySelectorAll('ViewFields FieldRef');
+
+                            const attrNames = Array.from(nodes).map((node)=>{
+                                return node.getAttribute('Name')
+                            });
+
 
                             return new Promise((resolve, reject) => {
-
-
 
                                 // Create a CAML view that retrieves all contacts items  with assigne RowLimit value to the query 
                                 if (goToPage) {
@@ -1302,7 +1316,8 @@ export default () => {
                                     camlQuery.set_viewXml(`<View>${query.replace(/(\<View\>|\<\/View\>)/gi,'')}<RowLimit>${pageSize * goToPage}</RowLimit></View>`);
                                     spItems = list.getItems(camlQuery);
 
-                                    context.load(spItems);
+                                    context.load(spItems, `Include(${attrNames.join(', ')})`, 'ListItemCollectionPosition');
+
                                     context.executeQueryAsync(
                                         function() {
                                             let listEnumerator = spItems.getEnumerator();
@@ -1313,14 +1328,48 @@ export default () => {
                                             while (listEnumerator.moveNext()) {
                                                 let list = listEnumerator.get_current();
                                                 let item = {};
-
+                                            
                                                 for (let i = 0, nodeLength = nodes.length; i < nodeLength; i++) {
                                                     let field = nodes[i].getAttribute('Name');
                                                     let json = nodes[i].getAttribute('JSON');
-                                                    item[field] = json ? JSON.parse(list.get_item(field)) : list.get_item(field);
-                                                }
+                                                    
+                                                    if( ['Attachments', 'AttachmentFiles'].includes(field) ){
+                                                        //check if key does not exist
+                                                        if(!item['Attachments']){
 
+                                                            if (list.get_item('Attachments')) {
+                                                                let attEnumerator = list.get_attachmentFiles().getEnumerator();
+                                                                let files = [];
+                                                                while (attEnumerator.moveNext()) {
+                                                                    let attachment = attEnumerator.get_current();
+                        
+                                                                    files.push({
+                                                                        fileName: attachment.get_fileName(),
+                                                                        fileURL: attachment.get_serverRelativeUrl()
+                                                                    });
+            
+                                                                }
+            
+                                                                item['Attachments'] = files;
+                                                            }
+
+                                                        }
+                                                        
+                                                    } else if(['Author', 'Editor'].includes(field)){
+                                                        if(!item[field]){
+                                                            
+                                                            item[`${field}Id`] = list.get_item(field).get_lookupId();
+
+                                                        }
+                                                    } else {
+
+                                                        item[field] = json ? JSON.parse(list.get_item(field)) : list.get_item(field);
+
+                                                    }
+                                                }
+                                                    
                                                 items.push(item);
+                                        
                                             }
 
                                             pageIndex = goToPage;
@@ -1341,36 +1390,78 @@ export default () => {
 
                                 } else {
                                     pageIndex === 1 ? camlQuery.set_listItemCollectionPosition(null) : camlQuery.set_listItemCollectionPosition(position);
+
                                     camlQuery.set_viewXml(`<View>${query.replace(/(\<View\>|\<\/View\>)/gi,'')}<RowLimit>${pageSize}</RowLimit></View>`);
                                     spItems = list.getItems(camlQuery);
 
-                                    context.load(spItems);
+
+                                    context.load(spItems, `Include(${attrNames.join(', ')})`, 'ListItemCollectionPosition');
                                     context.executeQueryAsync(
                                         function() {
                                             let listEnumerator = spItems.getEnumerator();
                                             items = [];
 
-                                            let nodes = doc.querySelectorAll('ViewFields FieldRef');
-
+                                            
                                             while (listEnumerator.moveNext()) {
                                                 let list = listEnumerator.get_current();
                                                 let item = {};
-
+                                            
                                                 for (let i = 0, nodeLength = nodes.length; i < nodeLength; i++) {
                                                     let field = nodes[i].getAttribute('Name');
                                                     let json = nodes[i].getAttribute('JSON');
-                                                    item[field] = json ? JSON.parse(list.get_item(field)) : list.get_item(field);
-                                                }
+                                                    
+                                                    if( ['Attachments', 'AttachmentFiles'].includes(field) ){
+                                                        //check if key does not exist
+                                                        if(!item['Attachments']){
 
+                                                            if (list.get_item('Attachments')) {
+                                                                let attEnumerator = list.get_attachmentFiles().getEnumerator();
+                                                                let files = [];
+                                                                while (attEnumerator.moveNext()) {
+                                                                    let attachment = attEnumerator.get_current();
+                        
+                                                                    files.push({
+                                                                        fileName: attachment.get_fileName(),
+                                                                        fileURL: attachment.get_serverRelativeUrl()
+                                                                    });
+            
+                                                                }
+            
+                                                                item['Attachments'] = files;
+                                                            }
+
+                                                        }
+                                                    } else if(['Author', 'Editor'].includes(field)){
+                                                        if(!item[field]){
+                                                            
+                                                            item[`${field}Id`] = list.get_item(field).get_lookupId();
+
+                                                        }
+                                                    } else {
+
+                                                        item[field] = json ? JSON.parse(list.get_item(field)) : list.get_item(field);
+
+                                                    }
+                                                }
+                                                    
                                                 items.push(item);
+                                        
                                             }
 
 
-                                            self.managePagerControl();
-                                            resolve({
-                                                items,
-                                                pageInformation
-                                            });
+                                            if(items.length === 0){
+                                                resolve({
+                                                    items,
+                                                    pageInformation: '0-0'
+                                                });
+                                            } else {
+                                                self.managePagerControl();
+                                                resolve({
+                                                    items,
+                                                    pageInformation
+                                                });
+                                            }
+
 
                                         },
                                         function(sender, args) {
