@@ -1539,7 +1539,7 @@ export default () => {
                         }
                     }).then(async(response) => {
                         try {
-                            let { data: { d: { UserProfileProperties } } } = await this.getUserProfilePropertyFor(defaultDomain, (response.data.d.LoginName.split('\\').pop()));
+                            let { data: { d: { UserProfileProperties } } } = await this.getUserProfilePropertyFor((response.data.d.LoginName.split('\\').pop()));
 
                             deferred.resolve(
                                 angular.merge(response, {
